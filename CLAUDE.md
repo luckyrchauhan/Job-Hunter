@@ -84,6 +84,23 @@ All Claude Code skills are in `skills/` directory:
 - `outputs/cover-letters/` — cover letters per job
 - `outputs/outreach/` — drafted outreach messages
 
+## Job Sources
+
+| Source | Script | Skill | Status |
+|--------|--------|-------|--------|
+| LinkedIn | `scripts/scrapers/scrape_linkedin.py` | `skills/search/linkedin.md` | 🔴 Not written |
+| Indeed | `scripts/scrapers/scrape_indeed.py` | `skills/search/indeed.md` | 🟡 Partial (bot protection) |
+| Glassdoor | `scripts/scrapers/scrape_glassdoor.py` | `skills/search/glassdoor.md` | 🔴 Not written |
+| Wellfound | `scripts/scrapers/scrape_wellfound.py` | `skills/search/wellfound.md` | 🔴 Not written |
+| Himalayas | `scripts/scrapers/scrape_himalayas.py` | — | 🟡 Partial (filter broken) |
+| RemoteOK | `scripts/scrapers/scrape_remoteok.py` | — | 🟡 Partial (tag filter loose) |
+| YC Jobs | `scripts/scrapers/scrape_yc.py` | `skills/search/ycombinator.md` | 🔴 Selector broken |
+| Hiring Cafe | `scripts/scrapers/scrape_hiring_cafe.py` | `skills/search/hiring-cafe.md` | ✅ Built |
+| Levels.fyi | — | `skills/search/levels-fyi.md` | 🔴 Not written |
+| Builtin | — | `skills/search/builtin.md` | 🔴 Not written |
+| Company Direct | — | `skills/search/company-direct.md` | 🔴 Not written |
+| Niche Boards | — | `skills/search/niche-boards.md` | 🔴 Not written |
+
 ## Project Status
 
 - M1 Foundation: COMPLETE
