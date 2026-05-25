@@ -69,6 +69,8 @@ run_scraper "LinkedIn"       "scripts/scrapers/scrape_linkedin.py"
 run_scraper "Glassdoor"      "scripts/scrapers/scrape_glassdoor.py"
 run_scraper "Wellfound"      "scripts/scrapers/scrape_wellfound.py"
 run_scraper "Builtin"        "scripts/scrapers/scrape_builtin.py"
+run_scraper "Dice"           "scripts/scrapers/scrape_dice.py"
+run_scraper "Monster"        "scripts/scrapers/scrape_monster.py"
 run_scraper "Niche Boards"   "scripts/scrapers/scrape_niche.py"
 
 # Company direct — weekly only (Mondays)

@@ -120,12 +120,22 @@ def check_visa(company: str, description: str) -> dict:
 # ─── Fit Score ────────────────────────────────────────────────────────────────
 
 PM_TITLES = [
-    "product manager", "senior product manager", "sr product manager",
-    "sr. product manager", "principal product manager", "lead product manager",
-    "associate product manager", "apm", "platform product manager",
-    "ai product manager", "technical product manager", "group product manager",
-    "director of product", "vp of product", "vp product", "head of product",
+    "product manager",
+    "ai product manager",
+]
+
+# Titles that look like PM but are wrong level — hard filtered out
+EXCLUDED_TITLES = [
+    "senior product manager", "senior pm", "sr product manager", "sr. product manager",
+    "principal product manager", "principal pm",
+    "director of product", "director, product", "director of pm",
+    "vp of product", "vp product", "vice president of product",
+    "head of product",
+    "group product manager", "group pm",
     "staff product manager",
+    "lead product manager",
+    "technical program manager",
+    "engineering manager",
 ]
 
 NON_PM_DISCARD = [
@@ -192,6 +202,14 @@ def score_job(job: dict) -> dict:
     # ── Hard filter: role relevance ──
     title_is_pm = any(t in title for t in PM_TITLES)
     title_is_non_pm = any(t in title for t in NON_PM_DISCARD)
+    title_is_excluded = any(t in title for t in EXCLUDED_TITLES)
+
+    # Exclude wrong-level titles (Senior PM, Director, VP, etc.)
+    if title_is_excluded:
+        return {**job,
+                "score": 0.0, "score_band": "DISCARD",
+                "discard": True, "discard_reason": "wrong_level_title",
+                "hard_filter_passed": False}
 
     if title_is_non_pm and not title_is_pm:
         return {**job,
@@ -416,8 +434,16 @@ def main():
         else:
             stats["discard"] += 1
 
-    # Sort by score desc
-    scored.sort(key=lambda j: j.get("score", 0), reverse=True)
+    # Sort: Boston/MA first, then remote, then other US — within each group by score desc
+    def location_priority(j):
+        loc = (j.get("location") or "").lower()
+        if any(k in loc for k in ["boston", "cambridge, ma", "massachusetts", ", ma", "(ma)"]):
+            return 0  # Boston/MA — top priority
+        if any(k in loc for k in ["remote", "anywhere", "united states", "usa", "us only"]):
+            return 1  # Remote US
+        return 2      # Other US cities
+
+    scored.sort(key=lambda j: (location_priority(j), -j.get("score", 0)))
 
     # Save
     with open(SCORED_FILE, "w") as f:

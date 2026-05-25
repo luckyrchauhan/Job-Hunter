@@ -1,18 +1,29 @@
 {
   "target_roles": [
     "Product Manager",
+    "AI Product Manager"
+  ],
+  "exclude_titles": [
     "Senior Product Manager",
-    "Associate Product Manager",
-    "APM",
-    "Platform Product Manager",
-    "AI Product Manager",
-    "Technical Product Manager"
+    "Senior PM",
+    "Director of Product",
+    "Director, Product",
+    "VP of Product",
+    "VP Product",
+    "Principal PM",
+    "Principal Product Manager",
+    "Group Product Manager",
+    "Head of Product",
+    "Engineering Manager",
+    "Technical Program Manager"
   ],
   "locations": [
-    "Remote",
     "Boston, MA",
+    "Massachusetts",
+    "Remote",
     "United States"
   ],
+  "location_priority": ["Boston", "MA", "Massachusetts", "Remote"],
   "exclude_locations": [],
   "minimum_salary_usd": 120000,
   "visa_sponsorship_required": true,
