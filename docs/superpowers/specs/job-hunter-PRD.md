@@ -358,13 +358,21 @@ The `CLAUDE.md` file at the root tells Claude Code everything it needs:
 - [x] Init git repo
 - [x] Extract resume into `data/my-resume.md`
 
-### Milestone 2 — Search (Day 2–3)
+### Milestone 2 — Search (Day 2–3) ✅ SKILLS WRITTEN — ⏳ PENDING: Apify key + live test
 
-- [ ] Write `skills/search/linkedin.md` skill
-- [ ] Write `skills/search/indeed.md` skill
-- [ ] Set up Apify account + get free API key
-- [ ] Test scraping — get raw jobs into `data/jobs-raw/`
-- [ ] Add 2–3 more sources (Glassdoor, Wellfound, company-direct)
+- [x] Write `skills/search/linkedin.md` skill (Apify + Playwright fallback)
+- [x] Write `skills/search/indeed.md` skill (Apify + Playwright fallback)
+- [x] Write `skills/search/glassdoor.md` skill
+- [x] Write `skills/search/wellfound.md` skill (Playwright)
+- [x] Write `skills/search/ycombinator.md` skill (visa=true filter)
+- [x] Write `skills/search/levels-fyi.md` skill (salary data)
+- [x] Write `skills/search/builtin.md` skill
+- [x] Write `skills/search/niche-boards.md` skill (WWR, RemoteOK, Himalayas, etc.)
+- [x] Write `skills/search/company-direct.md` skill (180+ company career pages)
+- [x] Write `scripts/daily-scan.sh` orchestrator (all 9 sources, phased)
+- [ ] Set up Apify account + get free API key → fill in `.env`
+- [ ] Install Python deps (requests, playwright, beautifulsoup4)
+- [ ] Live test: run daily-scan.sh → verify jobs land in `data/jobs-raw/`
 
 ### Milestone 3 — Score & Filter (Day 3–4)
 
