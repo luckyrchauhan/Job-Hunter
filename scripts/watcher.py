@@ -128,27 +128,40 @@ def quick_score(job: dict) -> int:
     Fast heuristic score 1–10. No Claude API — avoids cost on every 15-min poll.
     Daily scan will do full AI scoring on confirmed matches.
     """
-    score = 5  # baseline
-    text = (job.get("title", "") + " " + job.get("description", "")).lower()
+    title_text = job.get("title", "").lower()
+    desc_text  = job.get("description", "").lower()
+    full_text  = title_text + " " + desc_text
 
-    # Strong PM title match
-    if any(t in text for t in ["product manager", "senior pm", "principal pm",
-                                "director of product", "head of product",
-                                "platform pm", "ai pm", "apm", "associate pm"]):
-        score += 2
+    # MUST have PM title — no PM title = max score 4 (never triggers instant alert)
+    pm_title_match = any(t in title_text for t in [
+        "product manager", "senior pm", "principal pm",
+        "director of product", "head of product",
+        "platform pm", "ai pm", "apm", "associate pm",
+        "vp of product", "vp product", "group pm"
+    ])
+    if not pm_title_match:
+        return 4  # hard cap — won't trigger ≥8 alert
+
+    score = 5  # baseline (only reached if PM title matched)
+
+    # PM seniority boost
+    if any(t in title_text for t in ["senior", "principal", "director", "vp", "group", "lead"]):
+        score += 1
 
     # AI/LLM signal (+1.5)
-    if any(k in text for k in ["ai", "llm", "generative", "machine learning", " ml "]):
+    if any(k in full_text for k in ["llm", "generative ai", "machine learning", "ai product"]):
         score += 1.5
+    elif "ai" in title_text:
+        score += 1
 
     # Enterprise/platform signal (+1)
-    if any(k in text for k in ["enterprise", "platform", "saas", "b2b"]):
+    if any(k in full_text for k in ["enterprise", "platform", "saas", "b2b"]):
         score += 1
 
     # Negative signals
-    if any(k in text for k in ["intern", "junior", "entry level"]):
+    if any(k in title_text for k in ["intern", "junior", "entry level", "associate"]):
         score -= 2
-    if any(k in text for k in ["marketing manager", "sales", "hardware", "embedded"]):
+    if any(k in title_text for k in ["marketing", "sales", "hardware", "embedded", "engineering manager"]):
         score -= 3
 
     return min(10, max(1, round(score)))

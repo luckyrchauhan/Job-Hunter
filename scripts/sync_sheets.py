@@ -107,7 +107,7 @@ def sort_apps(apps: list) -> list:
 def sync_tab_full(ws, apps: list):
     """Overwrite a tab with header + all rows (columns A–N only — preserves user columns O+)."""
     rows = [COLUMNS] + [app_to_row(a) for a in sort_apps(apps)]
-    ws.update(f"A1:N{len(rows)}", rows)
+    ws.update(rows, f"A1:N{len(rows)}")
     print(f"  ✓ Tab '{ws.title}' — {len(apps)} rows written")
 
 
@@ -129,7 +129,7 @@ def ensure_daily_tab(spreadsheet, tab_name: str, apps: list):
         return
 
     rows = [COLUMNS] + [app_to_row(a) for a in sort_apps(apps)]
-    ws.update(f"A1:N{len(rows)}", rows)
+    ws.update(rows, f"A1:N{len(rows)}")
     print(f"  ✓ Snapshot tab '{tab_name}' created — {len(apps)} rows")
 
 
@@ -164,7 +164,7 @@ def sync_summary_tab(spreadsheet, apps: list):
     else:
         rows.append(["None overdue ✅", "", ""])
 
-    ws.update("A1:C" + str(len(rows)), rows)
+    ws.update(rows, "A1:C" + str(len(rows)))
     print(f"  ✓ Summary tab updated")
 
 
