@@ -11,11 +11,12 @@
 
 ## Job Search Parameters
 
-- **Target roles:** Product Manager, Senior PM, APM, Platform PM, AI PM
-- **Locations:** Remote,anywhere in the USA
+- **Target roles:** Product Manager, PM, APM, Platform PM, AI PM
+- **Locations:** Remote, anywhere in the USA
 - **Minimum salary:** $120,000 USD/year
 - **Visa sponsorship:** REQUIRED — skip any job that doesn't sponsor H1B
-- **Experience level:** 11+ years (apply to Senior PM, PM, APM depending on company stage)
+- **PM Experience level:** 3-5years (apply to PM, PM, APM depending on company stage)
+- **Total Experience level:** 11 years which include non-pm role
 
 ## My Resume
 
