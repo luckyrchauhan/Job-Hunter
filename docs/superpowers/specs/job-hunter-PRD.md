@@ -349,13 +349,14 @@ The `CLAUDE.md` file at the root tells Claude Code everything it needs:
 
 ## 14. Build Order (Milestones)
 
-### Milestone 1 — Foundation (Day 1)
+### Milestone 1 — Foundation (Day 1) ✅ COMPLETE
 
-- [ ] Set up project structure (all folders + files)
-- [ ] Write `CLAUDE.md` with resume + rules
-- [ ] Write `config/` JSON files with defaults
-- [ ] Set up `.env` + `.gitignore`
-- [ ] Init git repo
+- [x] Set up project structure (all folders + files)
+- [x] Write `CLAUDE.md` with resume + rules
+- [x] Write `config/` JSON files with defaults
+- [x] Set up `.env` + `.gitignore`
+- [x] Init git repo
+- [x] Extract resume into `data/my-resume.md`
 
 ### Milestone 2 — Search (Day 2–3)
 
