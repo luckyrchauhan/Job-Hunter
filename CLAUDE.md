@@ -56,7 +56,7 @@ See `config/score-weights.json` for full weights.
 
 ## Notification Channel
 
-- Telegram bot (see `.env` for TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID)
+- Slack webhook (see `.env` for SLACK_WEBHOOK_URL)
 - Alert threshold: urgency tier ≤ 3 (Apply Now / <1hr / <5hr / <15hr)
 
 ## Skills Location
@@ -88,7 +88,7 @@ All Claude Code skills are in `skills/` directory:
 
 - M1 Foundation: IN PROGRESS
 - M2 Search: NOT STARTED
-- M3 Score & Filter: NOT STARTED
+- M3 Score & Filter: COMPLETE
 - M4 Notify: NOT STARTED
 - M5 Outreach & Apply: NOT STARTED
 - M6 Track & Follow-up: NOT STARTED
