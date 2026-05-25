@@ -2,7 +2,7 @@
 
 **Version:** 1.0  
 **Date:** 2026-05-25  
-**Owner:** Lucky Chauhan (lucky.raajc@gmail.com)  
+**Owner:** Your Name (your.email@example.com)  
 **Status:** Ready to Build
 
 ---
@@ -23,13 +23,13 @@ Job searching across multiple platforms (LinkedIn, Indeed, Glassdoor, Wellfound,
 
 ## 2. Target User
 
-**Lucky Chauhan** — Product Manager actively job searching.
+**Your Name** — Product Manager actively job searching.
 
 ### Profile (TO BE FILLED before first run)
 
 ```yaml
-name: Lucky Chauhan
-email: lucky.raajc@gmail.com
+name: Your Name
+email: your.email@example.com
 target_role: Product Manager
 experience_level: [Senior PM / APM/ PM] # ← fill this
 locations: [Remote, anywhere in the USA] # ← fill this

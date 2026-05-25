@@ -2,11 +2,11 @@
 
 ## Who I Am
 
-- **Name:** Lucky Chauhan
-- **Email:** lucky.raajc@gmail.com
-- **Phone:** 857-313-1707
+- **Name:** Your Name
+- **Email:** your.email@example.com
+- **Phone:** 555-000-0000
 - **Location:** Indiana, USA (EDT — Eastern Daylight Time)
-- **LinkedIn:** linkedin.com/in/luckychauhan
+- **LinkedIn:** linkedin.com/in/your-profile
 - **Visa:** H1B sponsorship required
 
 ## Job Search Parameters
@@ -57,10 +57,10 @@ See `config/score-weights.json` for full weights.
 
 ### Cron entries (`crontab -e`):
 ```
-0  8 * * * /bin/bash /Users/luckychauhan/Documents/Projects/Antigravity/Job-Hunter/scripts/daily-scan.sh >> /Users/luckychauhan/Documents/Projects/Antigravity/Job-Hunter/logs/daily-scan.log 2>&1
-0 12 * * * /bin/bash /Users/luckychauhan/Documents/Projects/Antigravity/Job-Hunter/scripts/daily-scan.sh >> /Users/luckychauhan/Documents/Projects/Antigravity/Job-Hunter/logs/daily-scan.log 2>&1
-0 15 * * * /bin/bash /Users/luckychauhan/Documents/Projects/Antigravity/Job-Hunter/scripts/daily-scan.sh >> /Users/luckychauhan/Documents/Projects/Antigravity/Job-Hunter/logs/daily-scan.log 2>&1
-*/15 8-20 * * * /Users/luckychauhan/Documents/Projects/Antigravity/Job-Hunter/venv/bin/python /Users/luckychauhan/Documents/Projects/Antigravity/Job-Hunter/scripts/watcher.py >> /Users/luckychauhan/Documents/Projects/Antigravity/Job-Hunter/logs/watcher.log 2>&1
+0  8 * * * /bin/bash /Users/your-profile/Documents/Projects/Antigravity/Job-Hunter/scripts/daily-scan.sh >> /Users/your-profile/Documents/Projects/Antigravity/Job-Hunter/logs/daily-scan.log 2>&1
+0 12 * * * /bin/bash /Users/your-profile/Documents/Projects/Antigravity/Job-Hunter/scripts/daily-scan.sh >> /Users/your-profile/Documents/Projects/Antigravity/Job-Hunter/logs/daily-scan.log 2>&1
+0 15 * * * /bin/bash /Users/your-profile/Documents/Projects/Antigravity/Job-Hunter/scripts/daily-scan.sh >> /Users/your-profile/Documents/Projects/Antigravity/Job-Hunter/logs/daily-scan.log 2>&1
+*/15 8-20 * * * /Users/your-profile/Documents/Projects/Antigravity/Job-Hunter/venv/bin/python /Users/your-profile/Documents/Projects/Antigravity/Job-Hunter/scripts/watcher.py >> /Users/your-profile/Documents/Projects/Antigravity/Job-Hunter/logs/watcher.log 2>&1
 ```
 
 ## Notification Channel

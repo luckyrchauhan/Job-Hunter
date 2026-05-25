@@ -1,10 +1,10 @@
-# Lucky Chauhan — Resume
+# Your Name — Resume
 
 ## Contact
-- **Email:** lucky.raajc@gmail.com
-- **Phone:** 857-313-1707
+- **Email:** your.email@example.com
+- **Phone:** 555-000-0000
 - **Location:** Indiana, USA
-- **LinkedIn:** linkedin.com/in/luckychauhan
+- **LinkedIn:** linkedin.com/in/your-profile
 
 ## Summary
 Platform and Operations Product Manager with 11+ years of experience delivering enterprise systems across supply chain, manufacturing, and AI-enabled domains. Built and shipped an LLM-powered knowledge platform, defining AI model quality metrics, running experimentation on search relevance, and driving 78% adoption. Brings a rare combination of operational domain depth, SAP S/4HANA expertise, and hands-on AI product experience to complex platform problems. PMP and Scrum Master certified.

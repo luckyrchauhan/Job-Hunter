@@ -27,8 +27,8 @@ I'm a PM with 11 years of experience — most relevant here: [1 specific thing f
 I'd appreciate a 15-minute conversation if you have time, or any guidance on the process.
 
 Thanks,
-Lucky Chauhan
-lucky.raajc@gmail.com | linkedin.com/in/luckychauhan
+Your Name
+your.email@example.com | linkedin.com/in/your-profile
 ```
 
 ## Tone Rules

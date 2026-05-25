@@ -21,7 +21,7 @@ load_dotenv()
 DATE = datetime.now().strftime("%Y-%m-%d")
 OUT_FILE = f"data/jobs-raw/niche-{DATE}.json"
 
-HEADERS = {"User-Agent": "JobHunter/1.0 (lucky.raajc@gmail.com)", "Accept": "application/json"}
+HEADERS = {"User-Agent": "JobHunter/1.0 (your.email@example.com)", "Accept": "application/json"}
 
 PM_TITLES = [
     "product manager", "senior product manager", "sr. product manager",

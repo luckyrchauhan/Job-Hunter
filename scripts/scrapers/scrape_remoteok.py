@@ -22,7 +22,7 @@ def is_pm_title(title: str) -> bool:
 def main():
     os.makedirs("data/jobs-raw", exist_ok=True)
 
-    headers = {"User-Agent": "Job Hunter Bot (lucky.raajc@gmail.com)"}
+    headers = {"User-Agent": "Job Hunter Bot (your.email@example.com)"}
     resp = requests.get("https://remoteok.com/api", headers=headers, timeout=30)
 
     if resp.status_code != 200:

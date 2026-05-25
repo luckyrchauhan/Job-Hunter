@@ -1051,12 +1051,12 @@ After merging, run `crontab -e` and add:
 
 ```cron
 # Job Hunter — scheduled scans
-0  8 * * * /bin/bash /Users/luckychauhan/Documents/Projects/Antigravity/Job-Hunter/scripts/daily-scan.sh >> /Users/luckychauhan/Documents/Projects/Antigravity/Job-Hunter/logs/daily-scan.log 2>&1
-0 12 * * * /bin/bash /Users/luckychauhan/Documents/Projects/Antigravity/Job-Hunter/scripts/daily-scan.sh >> /Users/luckychauhan/Documents/Projects/Antigravity/Job-Hunter/logs/daily-scan.log 2>&1
-0 15 * * * /bin/bash /Users/luckychauhan/Documents/Projects/Antigravity/Job-Hunter/scripts/daily-scan.sh >> /Users/luckychauhan/Documents/Projects/Antigravity/Job-Hunter/logs/daily-scan.log 2>&1
+0  8 * * * /bin/bash /path/to/Job-Hunter/scripts/daily-scan.sh >> /path/to/Job-Hunter/logs/daily-scan.log 2>&1
+0 12 * * * /bin/bash /path/to/Job-Hunter/scripts/daily-scan.sh >> /path/to/Job-Hunter/logs/daily-scan.log 2>&1
+0 15 * * * /bin/bash /path/to/Job-Hunter/scripts/daily-scan.sh >> /path/to/Job-Hunter/logs/daily-scan.log 2>&1
 
 # Job Hunter — instant alert watcher (every 15min, 8am–8pm)
-*/15 8-20 * * * /Users/luckychauhan/Documents/Projects/Antigravity/Job-Hunter/venv/bin/python /Users/luckychauhan/Documents/Projects/Antigravity/Job-Hunter/scripts/watcher.py >> /Users/luckychauhan/Documents/Projects/Antigravity/Job-Hunter/logs/watcher.log 2>&1
+*/15 8-20 * * * /path/to/Job-Hunter/venv/bin/python /path/to/Job-Hunter/scripts/watcher.py >> /path/to/Job-Hunter/logs/watcher.log 2>&1
 ```
 
 ## Google Sheets Setup (for Lucky)

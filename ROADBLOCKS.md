@@ -16,7 +16,7 @@ All milestones M1–M6 are code-complete. Remaining items are **config-only** �
 |---|------|----------|--------|
 | 1 | `APIFY_API_TOKEN` not set | 🔴 High | Add to `.env`. Enables LinkedIn, Indeed (Apify), Glassdoor, Wellfound scrapers. Get token: https://console.apify.com/account/integrations |
 | 2 | `ANTHROPIC_API_KEY` not set | 🟡 Medium | Add to `.env`. Enables AI resume/cover letter drafting in M5. Templates work without it. |
-| 3 | 8am daily scan cron not installed | 🟡 Medium | Run: `crontab -e` and add: `0 8 * * * /bin/bash /Users/luckychauhan/Documents/Projects/Antigravity/Job-Hunter/scripts/daily-scan.sh >> /Users/luckychauhan/Documents/Projects/Antigravity/Job-Hunter/logs/daily-scan.log 2>&1` |
+| 3 | 8am daily scan cron not installed | 🟡 Medium | Run: `crontab -e` and add: `0 8 * * * /bin/bash /path/to/Job-Hunter/scripts/daily-scan.sh >> /path/to/Job-Hunter/logs/daily-scan.log 2>&1` |
 
 ---
 

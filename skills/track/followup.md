@@ -31,8 +31,8 @@ I'm still very interested in the opportunity and would welcome a chance to conne
 Happy to share any additional materials if helpful.
 
 Thanks,
-Lucky Chauhan
-lucky.raajc@gmail.com
+Your Name
+your.email@example.com
 ```
 
 ### 14-day Follow-up (no response)
@@ -45,7 +45,7 @@ Just a brief follow-up on my [Role Title] application. I remain interested and
 wanted to check if there's any update on the timeline.
 
 Thanks for your time,
-Lucky Chauhan
+Your Name
 ```
 
 ### 21-day Close-out
@@ -59,8 +59,8 @@ I genuinely admire [something specific about company] and would welcome
 the chance to connect in the future if the right opportunity comes up.
 
 Thanks,
-Lucky Chauhan
-lucky.raajc@gmail.com | linkedin.com/in/luckychauhan
+Your Name
+your.email@example.com | linkedin.com/in/your-profile
 ```
 
 ### Post-Interview Thank You (within 48h)
@@ -74,7 +74,7 @@ a product decision, or something that excited you].
 
 This reinforced my interest in [Company]. Looking forward to next steps.
 
-Lucky Chauhan
+Your Name
 ```
 
 ## Process

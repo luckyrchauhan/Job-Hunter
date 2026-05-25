@@ -36,8 +36,8 @@ Would you be open to a 15-minute chat, or if it's easier, just pointing me to th
 [Optional: "Happy to share my resume / LinkedIn."]
 
 Thanks,
-Lucky Chauhan
-lucky.raajc@gmail.com | linkedin.com/in/luckychauhan
+Your Name
+your.email@example.com | linkedin.com/in/your-profile
 ```
 
 ## Tone Rules
