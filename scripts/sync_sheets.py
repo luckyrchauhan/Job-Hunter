@@ -168,6 +168,47 @@ def sync_summary_tab(spreadsheet, apps: list):
     print(f"  ✓ Summary tab updated")
 
 
+def sync_scored_jobs_tab(spreadsheet):
+    """Overwrite Scored Jobs tab with top 200 jobs from jobs-scored.json sorted by score."""
+    scored_file = BASE_DIR / "data" / "jobs-scored.json"
+    if not scored_file.exists():
+        print("  ⚡ Scored Jobs — jobs-scored.json not found, skipping")
+        return
+
+    content = scored_file.read_text().strip()
+    if not content:
+        print("  ⚡ Scored Jobs — empty, skipping")
+        return
+
+    jobs = json.loads(content)
+    jobs_sorted = sorted(jobs, key=lambda x: -(x.get("score") or 0))[:200]
+
+    try:
+        ws = spreadsheet.worksheet("Scored Jobs")
+        ws.clear()
+    except Exception:
+        ws = spreadsheet.add_worksheet(title="Scored Jobs", rows=1000, cols=10)
+
+    COLS = ["Score", "Company", "Role", "Urgency", "Visa", "Salary", "Posted", "Source", "Apply URL", "Status"]
+    rows = [COLS]
+    for j in jobs_sorted:
+        rows.append([
+            j.get("score", ""),
+            j.get("company", ""),
+            j.get("title", j.get("role", "")),
+            j.get("urgency", ""),
+            j.get("visa", ""),
+            j.get("salary_text", ""),
+            j.get("posted_at", ""),
+            j.get("source", ""),
+            j.get("apply_url", j.get("url", "")),
+            j.get("status", "new"),
+        ])
+
+    ws.update(rows, f"A1:J{len(rows)}")
+    print(f"  ✓ Scored Jobs tab — {len(rows)-1} jobs written")
+
+
 def upsert_job_row(spreadsheet, job: dict):
     """
     Add or update a single scored job row in the 'Scored Jobs' tab.
@@ -254,6 +295,9 @@ def main():
 
     # 3. Summary tab
     sync_summary_tab(spreadsheet, apps)
+
+    # 4. Scored Jobs tab — all scored jobs from jobs-scored.json
+    sync_scored_jobs_tab(spreadsheet)
 
     print(f"\n✅ Google Sheets synced → https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit")
 
