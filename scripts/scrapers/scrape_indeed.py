@@ -62,18 +62,16 @@ def scrape_apify(max_results: int = 50) -> list:
 
     for search in SEARCHES:
         print(f"  Apify Indeed: '{search['position']}' @ '{search['location']}'")
+        # kaix/indeed-scraper: uses keyword+location params, returns PM-filtered results
         payload = {
-            "position": search["position"],
-            "location": search["location"],
-            "maxItems": max_results,
-            "parseCompanyDetails": True,
-            "saveOnlyUniqueItems": True,
-            "followApplyRedirects": False,
+            "keyword": search["position"],
+            "location": search["location"].split(",")[0].strip(),  # "Remote" or "Boston"
+            "maxResults": max_results,
         }
 
         try:
             resp = requests.post(
-                base_url,
+                f"https://api.apify.com/v2/acts/kaix~indeed-scraper/run-sync-get-dataset-items",
                 params={"token": APIFY_TOKEN, "timeout": 120, "memory": 512},
                 json=payload,
                 timeout=150,
@@ -86,7 +84,9 @@ def scrape_apify(max_results: int = 50) -> list:
             print(f"    → {len(items)} raw items")
 
             for item in items:
-                title = item.get("positionName", item.get("title", ""))
+                # kaix actor: title is {"text": "...", "normalized": "..."}
+                title_obj = item.get("title", "")
+                title = title_obj.get("text", "") if isinstance(title_obj, dict) else str(title_obj)
                 if not title or not is_pm_title(title):
                     continue
 
@@ -95,27 +95,40 @@ def scrape_apify(max_results: int = 50) -> list:
                     continue
                 seen.add(job_id)
 
-                # Company: Apify actor provides employer object with .name
-                employer = item.get("employer") or {}
-                company = (employer.get("name") or
-                           item.get("company", item.get("companyName", "")))
+                # kaix actor: company is a dict with .name
+                employer = item.get("company") or item.get("employer") or {}
+                company = (employer.get("name") or item.get("companyName", "")) if isinstance(employer, dict) else str(employer)
 
-                salary_text = item.get("salary", item.get("salaryText", ""))
+                # kaix actor: location is a dict {city, state, country}
+                loc_obj = item.get("location", {})
+                if isinstance(loc_obj, dict):
+                    loc_parts = [loc_obj.get("city",""), loc_obj.get("state",""), loc_obj.get("country","")]
+                    location_str = ", ".join(p for p in loc_parts if p)
+                else:
+                    location_str = str(loc_obj)
+
+                # kaix actor: salary is {"min": ..., "max": ..., "type": ...}
+                sal = item.get("salary") or {}
+                if isinstance(sal, dict):
+                    sal_min = sal.get("min")
+                    sal_max = sal.get("max")
+                    sal_text = f"${sal_min}–${sal_max}" if sal_min and sal_max else ""
+                else:
+                    sal_min, sal_max, sal_text = None, None, str(sal) if sal else ""
 
                 all_jobs.append({
                     "id": f"indeed-{job_id}",
                     "source": "indeed",
                     "title": title.strip(),
-                    "company": company.strip() if company else "",
-                    "location": item.get("location", search["location"]),
-                    "remote": "remote" in item.get("location", "").lower() or
-                              item.get("remote", False),
-                    "salary_text": salary_text,
-                    "salary_min": None,
-                    "salary_max": None,
-                    "posted_date": item.get("postedAt", DATE)[:10] if item.get("postedAt") else DATE,
-                    "apply_url": item.get("url", item.get("applyUrl", "")),
-                    "description": (item.get("description") or item.get("jobDescription") or "")[:2000],
+                    "company": company.strip() if isinstance(company, str) else "",
+                    "location": location_str,
+                    "remote": "remote" in location_str.lower(),
+                    "salary_text": sal_text,
+                    "salary_min": sal_min,
+                    "salary_max": sal_max,
+                    "posted_date": str(item.get("datePublished", item.get("postedAt", DATE)))[:10],
+                    "apply_url": item.get("urls", {}).get("indeed", item.get("url", "")),
+                    "description": (str(item.get("description") or ""))[:2000],
                     "source_query": f"{search['position']} | {search['location']}",
                     "scraped_at": datetime.now().isoformat(),
                 })

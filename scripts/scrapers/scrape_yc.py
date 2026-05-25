@@ -32,61 +32,8 @@ def is_pm_title(title: str) -> bool:
 # ─── Primary: JSON API ─────────────────────────────────────────────────────────
 
 def scrape_api() -> list:
-    """
-    Work at a Startup exposes a public API used by their own frontend.
-    Endpoint: GET /api/jobs  params: role=pm, visa=true, remote=true
-    Returns paginated JSON with full job objects.
-    """
-    jobs = []
-    seen = set()
-    headers = {"User-Agent": "JobHunter/1.0 (lucky.raajc@gmail.com)",
-               "Accept": "application/json"}
-
-    # Try multiple known API paths
-    endpoints = [
-        "https://www.workatastartup.com/api/jobs",
-        "https://api.workatastartup.com/v2/jobs",
-    ]
-    params = {"role": "pm", "visa": "true", "remote": "true", "limit": 100, "page": 1}
-
-    for base_url in endpoints:
-        try:
-            resp = requests.get(base_url, params=params, headers=headers, timeout=20)
-            if resp.status_code == 200:
-                data = resp.json()
-                raw_jobs = data if isinstance(data, list) else data.get("jobs", data.get("results", []))
-                print(f"  API {base_url}: {len(raw_jobs)} raw jobs")
-                for j in raw_jobs:
-                    job_id = str(j.get("id", j.get("slug", "")))
-                    title = j.get("title", j.get("name", ""))
-                    if not title or job_id in seen:
-                        continue
-                    if not is_pm_title(title):
-                        continue
-                    seen.add(job_id)
-                    company = j.get("company", {})
-                    company_name = company.get("name", "") if isinstance(company, dict) else str(company)
-                    jobs.append({
-                        "id": f"yc-{job_id}",
-                        "source": "yc_jobs",
-                        "title": title.strip(),
-                        "company": company_name,
-                        "location": j.get("location", "Remote"),
-                        "remote": j.get("remote", True),
-                        "visa_sponsored": True,  # filtered by visa=true param
-                        "salary_min": j.get("salaryMin") or j.get("salary_min"),
-                        "salary_max": j.get("salaryMax") or j.get("salary_max"),
-                        "posted_date": j.get("createdAt", j.get("created_at", DATE))[:10],
-                        "apply_url": j.get("url") or f"https://www.workatastartup.com/jobs/{job_id}",
-                        "description": (j.get("description") or j.get("body") or "")[:2000],
-                        "scraped_at": datetime.now().isoformat(),
-                    })
-                if jobs:
-                    return jobs
-        except Exception as e:
-            print(f"  API {base_url} error: {e}")
-            continue
-    return jobs
+    """API-based scraping — not available (site returns 406). Skip, use Playwright."""
+    return []
 
 
 # ─── Fallback: Playwright ──────────────────────────────────────────────────────
@@ -104,54 +51,36 @@ async def scrape_playwright(headless: bool = True) -> list:
             user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36"
         )
 
-        url = "https://www.workatastartup.com/jobs?role=pm&visa=true&remote=true"
+        # URL changed: now /jobs/l/product-manager (not /jobs?role=pm)
+        url = "https://www.workatastartup.com/jobs/l/product-manager"
         print(f"  Playwright → {url}")
-        await page.goto(url, wait_until="networkidle", timeout=60000)
-        await asyncio.sleep(4)
+        await page.goto(url, wait_until="domcontentloaded", timeout=30000)
+        await asyncio.sleep(5)
 
         # Scroll to lazy-load all results
         for _ in range(6):
             await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
             await asyncio.sleep(1.5)
 
-        # Work at a Startup job card selectors (as of 2025)
         job_data = await page.evaluate("""() => {
             const results = [];
-            // Try multiple selector strategies
-            const selectors = [
-                '.job-name',
-                '[data-page-load-event="Job Viewed"]',
-                'div[class*="job"] a[href*="/jobs/"]',
-                'a[href*="/jobs/"][class*="title"]',
-            ];
-
-            // Strategy 1: data attribute cards
-            document.querySelectorAll('[data-job-id]').forEach(card => {
-                const a = card.querySelector('a[href*="/jobs/"]');
-                const titleEl = card.querySelector('[class*="title"], h2, h3, strong');
-                const companyEl = card.querySelector('[class*="company"], [class*="name"]');
-                if (a) results.push({
-                    url: a.href,
-                    title: titleEl ? titleEl.innerText.trim() : (a.innerText.trim()),
-                    company: companyEl ? companyEl.innerText.trim() : '',
-                    card_text: card.innerText.substring(0, 400),
-                });
-            });
-
-            // Strategy 2: fallback — all links to /jobs/
-            if (results.length === 0) {
-                document.querySelectorAll('a[href*="/jobs/"]').forEach(a => {
-                    if (a.href.match(/\\/jobs\\/\\d+/)) {
-                        const parent = a.closest('li, article, div[class*="job"], div[class*="listing"]') || a.parentElement;
-                        results.push({
-                            url: a.href,
-                            title: a.innerText.trim() || a.title || '',
-                            company: '',
-                            card_text: parent ? parent.innerText.substring(0, 400) : '',
-                        });
+            // Job links are /jobs/{numeric_id}
+            document.querySelectorAll('a[href]').forEach(a => {
+                if (!/\\/jobs\\/\\d+/.test(a.href)) return;
+                const title = a.innerText.trim();
+                if (!title || title.length < 5) return;
+                // Try to find company name from parent card
+                const card = a.closest('li, article, div') || a.parentElement;
+                let company = '';
+                if (card) {
+                    const spans = card.querySelectorAll('span, p');
+                    for (const s of spans) {
+                        const t = s.innerText.trim();
+                        if (t && t !== title && t.length < 80) { company = t; break; }
                     }
-                });
-            }
+                }
+                results.push({ url: a.href, title, company });
+            });
             return results;
         }""")
 
