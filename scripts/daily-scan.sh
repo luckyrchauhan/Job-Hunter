@@ -3,87 +3,87 @@
 # Runs at 8:00 AM EDT via cron
 # Cron entry: 0 8 * * * /bin/bash /path/to/Job-Hunter/scripts/daily-scan.sh >> /path/to/Job-Hunter/logs/daily-scan.log 2>&1
 
-set -e
-
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LOG_FILE="$PROJECT_DIR/logs/daily-scan.log"
-DATE=$(date +%Y-%m-%d)
+PYTHON="$PROJECT_DIR/venv/bin/python"
 TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
 
 mkdir -p "$PROJECT_DIR/logs"
 mkdir -p "$PROJECT_DIR/data/jobs-raw"
+mkdir -p "$PROJECT_DIR/outputs/resumes"
+mkdir -p "$PROJECT_DIR/outputs/cover-letters"
+mkdir -p "$PROJECT_DIR/outputs/outreach"
 
 echo "========================================"
 echo "Job Hunter Daily Scan — $TIMESTAMP EDT"
 echo "========================================"
 
 # Load environment
-source "$PROJECT_DIR/.env" 2>/dev/null || { echo "ERROR: .env not found"; exit 1; }
+if [ -f "$PROJECT_DIR/.env" ]; then
+    set -a; source "$PROJECT_DIR/.env"; set +a
+else
+    echo "ERROR: .env not found"; exit 1
+fi
 
-# Validate required keys
-if [ -z "$APIFY_API_TOKEN" ]; then
-    echo "WARNING: APIFY_API_TOKEN not set — skipping Apify sources"
+# Validate venv
+if [ ! -f "$PYTHON" ]; then
+    echo "ERROR: venv not found at $PROJECT_DIR/venv — run: python3 -m venv venv && pip install -r requirements.txt"
+    exit 1
 fi
-if [ -z "$ANTHROPIC_API_KEY" ]; then
-    echo "ERROR: ANTHROPIC_API_KEY not set — cannot score jobs"; exit 1
-fi
+
+# Warn on missing keys (non-fatal — scrapers degrade gracefully)
+[ -z "$APIFY_API_TOKEN" ]    && echo "WARNING: APIFY_API_TOKEN not set — Apify scrapers will skip"
+[ -z "$ANTHROPIC_API_KEY" ]  && echo "WARNING: ANTHROPIC_API_KEY not set — AI drafting will use templates"
+[ -z "$SLACK_WEBHOOK_URL" ]  && echo "WARNING: SLACK_WEBHOOK_URL not set — Slack alerts disabled"
 
 cd "$PROJECT_DIR"
 
 echo ""
 echo "--- PHASE 1: SCRAPING ---"
 
-# LinkedIn (Apify)
-echo "[1/9] Scraping LinkedIn..."
-python3 scripts/scrapers/scrape_linkedin.py && echo "     LinkedIn ✓" || echo "     LinkedIn FAILED"
+run_scraper() {
+    local name="$1"
+    local script="$2"
+    if [ -f "$script" ]; then
+        echo "  Scraping $name..."
+        "$PYTHON" "$script" && echo "  ✓ $name" || echo "  ✗ $name FAILED (continuing)"
+    else
+        echo "  ⚠ $name — script not found: $script (skipping)"
+    fi
+}
 
-# Indeed (Apify)
-echo "[2/9] Scraping Indeed..."
-python3 scripts/scrapers/scrape_indeed.py && echo "     Indeed ✓" || echo "     Indeed FAILED"
+run_scraper "Hiring Cafe"    "scripts/scrapers/scrape_hiring_cafe.py"
+run_scraper "Indeed"         "scripts/scrapers/scrape_indeed.py"
+run_scraper "RemoteOK"       "scripts/scrapers/scrape_remoteok.py"
+run_scraper "Himalayas"      "scripts/scrapers/scrape_himalayas.py"
+run_scraper "YC Jobs"        "scripts/scrapers/scrape_yc.py"
+run_scraper "LinkedIn"       "scripts/scrapers/scrape_linkedin.py"
+run_scraper "Glassdoor"      "scripts/scrapers/scrape_glassdoor.py"
+run_scraper "Wellfound"      "scripts/scrapers/scrape_wellfound.py"
+run_scraper "Builtin"        "scripts/scrapers/scrape_builtin.py"
+run_scraper "Niche Boards"   "scripts/scrapers/scrape_niche.py"
 
-# Glassdoor (Apify)
-echo "[3/9] Scraping Glassdoor..."
-python3 scripts/scrapers/scrape_glassdoor.py && echo "     Glassdoor ✓" || echo "     Glassdoor FAILED"
-
-# Wellfound (Playwright)
-echo "[4/9] Scraping Wellfound..."
-python3 scripts/scrapers/scrape_wellfound.py && echo "     Wellfound ✓" || echo "     Wellfound FAILED"
-
-# YC Jobs (Playwright)
-echo "[5/9] Scraping YC Jobs..."
-python3 scripts/scrapers/scrape_yc.py && echo "     YC Jobs ✓" || echo "     YC Jobs FAILED"
-
-# Levels.fyi
-echo "[6/9] Scraping Levels.fyi..."
-python3 scripts/scrapers/scrape_levels.py && echo "     Levels.fyi ✓" || echo "     Levels.fyi FAILED"
-
-# Builtin
-echo "[7/9] Scraping Builtin..."
-python3 scripts/scrapers/scrape_builtin.py && echo "     Builtin ✓" || echo "     Builtin FAILED"
-
-# Niche boards
-echo "[8/9] Scraping Niche Boards..."
-python3 scripts/scrapers/scrape_niche.py && echo "     Niche Boards ✓" || echo "     Niche Boards FAILED"
-
-# Company direct (weekly only — runs on Mondays)
+# Company direct — weekly only (Mondays)
 if [ "$(date +%u)" = "1" ]; then
-    echo "[9/9] Scraping Company Career Pages (weekly)..."
-    python3 scripts/scrapers/scrape_company_direct.py && echo "     Company Direct ✓" || echo "     Company Direct FAILED"
+    run_scraper "Company Career Pages" "scripts/scrapers/scrape_company_direct.py"
 else
-    echo "[9/9] Company Direct — skipped (runs Mondays only)"
+    echo "  ⚡ Company Direct — runs Mondays only (skipping)"
 fi
 
 echo ""
 echo "--- PHASE 2: SCORE & FILTER ---"
-python3 scripts/score_jobs.py && echo "Scoring complete ✓" || echo "Scoring FAILED"
+"$PYTHON" scripts/score_jobs.py && echo "  ✓ Scoring complete" || echo "  ✗ Scoring FAILED"
 
 echo ""
-echo "--- PHASE 3: NOTIFY ---"
-python3 scripts/notify_telegram.py && echo "Telegram notification sent ✓" || echo "Notification FAILED"
+echo "--- PHASE 3: NOTIFY (Slack alerts) ---"
+"$PYTHON" scripts/notify_slack.py && echo "  ✓ Alerts sent" || echo "  ✗ Slack alerts FAILED"
 
 echo ""
 echo "--- PHASE 4: DEADLINE CHECK ---"
-python3 scripts/deadline_check.py && echo "Deadline check complete ✓" || echo "Deadline check FAILED"
+"$PYTHON" scripts/deadline-check.py && echo "  ✓ Deadline check done" || echo "  ✗ Deadline check FAILED"
+
+echo ""
+echo "--- PHASE 5: EXPORT TRACKER ---"
+"$PYTHON" scripts/export-tracker.py && echo "  ✓ tracker.xlsx updated" || echo "  ✗ Tracker export FAILED"
 
 echo ""
 echo "Scan complete — $(date +"%H:%M:%S")"
