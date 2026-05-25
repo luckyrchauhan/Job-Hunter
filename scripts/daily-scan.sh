@@ -1,7 +1,14 @@
 #!/bin/bash
-# Job Hunter — Daily Scan Script
-# Runs at 8:00 AM EDT via cron
-# Cron entry: 0 8 * * * /bin/bash /path/to/Job-Hunter/scripts/daily-scan.sh >> /path/to/Job-Hunter/logs/daily-scan.log 2>&1
+# Job Hunter — Scheduled Scan Script
+# Runs at 8:00 AM, 12:00 PM, 3:00 PM EDT via cron
+#
+# Cron entries (replace /path/to with your actual path):
+#   0  8 * * * /bin/bash /path/to/Job-Hunter/scripts/daily-scan.sh >> /path/to/Job-Hunter/logs/daily-scan.log 2>&1
+#   0 12 * * * /bin/bash /path/to/Job-Hunter/scripts/daily-scan.sh >> /path/to/Job-Hunter/logs/daily-scan.log 2>&1
+#   0 15 * * * /bin/bash /path/to/Job-Hunter/scripts/daily-scan.sh >> /path/to/Job-Hunter/logs/daily-scan.log 2>&1
+#
+# Instant watcher (every 15min, 8am–8pm) — fires alerts WITHOUT waiting for this script:
+#   */15 8-20 * * * /path/to/venv/bin/python /path/to/Job-Hunter/scripts/watcher.py >> /path/to/Job-Hunter/logs/watcher.log 2>&1
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PYTHON="$PROJECT_DIR/venv/bin/python"
@@ -33,7 +40,9 @@ fi
 # Warn on missing keys (non-fatal — scrapers degrade gracefully)
 [ -z "$APIFY_API_TOKEN" ]    && echo "WARNING: APIFY_API_TOKEN not set — Apify scrapers will skip"
 [ -z "$ANTHROPIC_API_KEY" ]  && echo "WARNING: ANTHROPIC_API_KEY not set — AI drafting will use templates"
-[ -z "$SLACK_WEBHOOK_URL" ]  && echo "WARNING: SLACK_WEBHOOK_URL not set — Slack alerts disabled"
+[ -z "$SLACK_WEBHOOK_URL" ]             && echo "WARNING: SLACK_WEBHOOK_URL not set — Slack alerts disabled"
+[ -z "$GOOGLE_SHEET_ID" ]               && echo "WARNING: GOOGLE_SHEET_ID not set — Sheets sync disabled"
+[ -z "$GOOGLE_SERVICE_ACCOUNT_JSON" ]   && echo "WARNING: GOOGLE_SERVICE_ACCOUNT_JSON not set — Sheets sync disabled"
 
 cd "$PROJECT_DIR"
 
@@ -82,8 +91,9 @@ echo "--- PHASE 4: DEADLINE CHECK ---"
 "$PYTHON" scripts/deadline-check.py && echo "  ✓ Deadline check done" || echo "  ✗ Deadline check FAILED"
 
 echo ""
-echo "--- PHASE 5: EXPORT TRACKER ---"
-"$PYTHON" scripts/export-tracker.py && echo "  ✓ tracker.xlsx updated" || echo "  ✗ Tracker export FAILED"
+echo "--- PHASE 5: SYNC TRACKER ---"
+"$PYTHON" scripts/sync_sheets.py && echo "  ✓ Google Sheets synced" || echo "  ✗ Sheets sync FAILED (check GOOGLE_SHEET_ID + GOOGLE_SERVICE_ACCOUNT_JSON in .env)"
+"$PYTHON" scripts/export-tracker.py && echo "  ✓ tracker.xlsx local backup updated" || echo "  ✗ Local xlsx export FAILED"
 
 echo ""
 echo "Scan complete — $(date +"%H:%M:%S")"
