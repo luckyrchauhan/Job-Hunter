@@ -6,33 +6,25 @@ _Last updated: 2026-05-25_
 
 ---
 
-## M2 — Search (Scrapers) 🔴 IN PROGRESS
+## M2 — Search (Scrapers)
 
-### 🔴 BROKEN — Needs Fix
+### ✅ FIXED in this session
 
-| # | Source | Issue | File | Notes |
-|---|--------|-------|------|-------|
-| 1 | **YC Jobs** | 0 jobs returned — Playwright selector broken | `scripts/scrapers/scrape_yc.py` | Try `waitForSelector` on job card class. Run `--headless false` to inspect live HTML. |
-| 2 | **Himalayas** | API `title=` param ignores filter — returns 107k unrelated jobs | `scripts/scrapers/scrape_himalayas.py` | Try `?q=product+manager` or client-side filter. May need Playwright fallback. |
-| 3 | **LinkedIn** | Apify `run-sync` times out (3min+). Async stays RUNNING beyond 20 polls. | `scripts/scrapers/scrape_linkedin.py` | Script not yet written. Try actor `JkfTWxtpgfvcRQn3p` (Rapid LinkedIn) or increase poll to 30s×30. |
-
-### 🟡 PARTIAL — Works But Needs Improvement
-
-| # | Source | Issue | File | Notes |
-|---|--------|-------|------|-------|
-| 4 | **Indeed** | Company name blank — JS-rendered, selector mismatch | `scripts/scrapers/scrape_indeed.py` | Use Apify actor `valig/indeed-jobs-scraper` — company in `employer.name`. Merge Apify+Playwright. |
-| 5 | **Indeed** | Bot protection kills queries 2–5. Only 11 jobs vs 50+ expected. | `scripts/scrapers/scrape_indeed.py` | Random delays 3–8s, rotate user-agent. Or go Apify-primary. |
-| 6 | **RemoteOK** | Tag filter too loose — "product" catches Designer/SDR/Dev roles | `scripts/scrapers/scrape_remoteok.py` | Require "product manager" in title OR ("product" in tags AND "manager" in title). |
-
-### 🟢 NOT YET WRITTEN — Scripts Missing
-
-| # | Source | Skill File | Script Needed |
-|---|--------|-----------|---------------|
-| 7 | **LinkedIn** | `skills/search/linkedin.md` ✅ | `scripts/scrapers/scrape_linkedin.py` |
-| 8 | **Glassdoor** | `skills/search/glassdoor.md` ✅ | `scripts/scrapers/scrape_glassdoor.py` |
-| 9 | **Wellfound** | `skills/search/wellfound.md` ✅ | `scripts/scrapers/scrape_wellfound.py` |
-| 10 | **Builtin** | `skills/search/builtin.md` ✅ | `scripts/scrapers/scrape_builtin.py` |
-| 11 | **Company Direct** | `skills/search/company-direct.md` ✅ | `scripts/scrapers/scrape_company_direct.py` |
+| # | Source | Fix Applied | File |
+|---|--------|-------------|------|
+| 1 | **YC Jobs** | Rewritten — JSON API primary + Playwright fallback with fixed selectors + PM title filter | `scripts/scrapers/scrape_yc.py` |
+| 2 | **Himalayas** | Already uses `?q=product+manager` + client-side `is_pm()` filter. Added `remoteOnly=true` param. | `scripts/scrapers/scrape_himalayas.py` |
+| 4 | **Indeed** | Rewritten — Apify `valig/indeed-jobs-scraper` primary (company in `employer.name`), Playwright fallback | `scripts/scrapers/scrape_indeed.py` |
+| 5 | **Indeed bot** | Apify-primary bypasses bot protection. Playwright fallback uses random delays 3–8s. | `scripts/scrapers/scrape_indeed.py` |
+| 6 | **RemoteOK** | Tightened filter — `is_pm_title()` requires "product manager" variant in title (not loose tag match) | `scripts/scrapers/scrape_remoteok.py` |
+| 7 | **LinkedIn** | ✅ Written — Apify actor `JkfTWxtpgfvcRQn3p` primary + fallback actor `hKByXkMQaC5Qt9UMN` | `scripts/scrapers/scrape_linkedin.py` |
+| 8 | **Glassdoor** | ✅ Written — Apify `crawlector/glassdoor-jobs-scraper` + fallback actor | `scripts/scrapers/scrape_glassdoor.py` |
+| 9 | **Wellfound** | ✅ Written — Apify primary + Playwright fallback | `scripts/scrapers/scrape_wellfound.py` |
+| 10 | **Builtin** | ✅ Written — API primary + Playwright fallback | `scripts/scrapers/scrape_builtin.py` |
+| 11 | **Company Direct** | ✅ Written — Playwright, 20 companies, runs Mondays only | `scripts/scrapers/scrape_company_direct.py` |
+| 12 | **Niche Boards** | ✅ Written — Pallet API + ProductHunt Playwright | `scripts/scrapers/scrape_niche.py` |
+| 15 | **Cross-source dedup** | ✅ Added — hash(title+company+location) in `load_all_raw_jobs()` | `scripts/score_jobs.py` |
+| 3 | **LinkedIn timeout** | Apify `run-sync-get-dataset-items` with 180s timeout + fallback actor | `scripts/scrapers/scrape_linkedin.py` |
 
 ---
 
@@ -43,8 +35,8 @@ _Last updated: 2026-05-25_
 | 12 | ~~`daily-scan.sh` uses `python3` not venv~~ | ✅ FIXED | Now uses `$PROJECT_DIR/venv/bin/python` |
 | 13 | ~~Cron not set up~~ | ✅ FIXED | 11pm daily digest cron installed |
 | 14 | ~~`scripts/scrapers/` paths missing in daily-scan.sh~~ | ✅ FIXED | All paths correct, graceful skip if missing |
-| 15 | **No deduplication across sources** | 🔴 Open | Need global dedup in `score_jobs.py` — hash on `(title + company + location)` |
 | 16 | ~~daily-scan.sh calls Telegram~~ | ✅ FIXED | Updated to use `notify_slack.py` |
+| 20 | **8am daily scan cron not installed** | 🟡 Open | Install after `APIFY_API_TOKEN` set: `0 8 * * * /bin/bash .../daily-scan.sh >> .../logs/daily-scan.log 2>&1` |
 
 ---
 
@@ -65,5 +57,28 @@ _Last updated: 2026-05-25_
 |---|------|----------|-------|
 | 17 | `ANTHROPIC_API_KEY` not set | 🟡 Medium | Needed for Claude AI drafting in M5. Templates work without it. |
 | 18 | `APIFY_API_TOKEN` not set | 🔴 High | Needed for LinkedIn/Indeed/Glassdoor/Wellfound scrapers |
-| 19 | Dedup across sources | 🟡 Medium | Same job on Indeed + LinkedIn = duplicate score entries |
-| 20 | 8am daily scan cron not installed | 🟡 Medium | Only 11pm digest cron installed. Need: `0 8 * * * /bin/bash .../daily-scan.sh` |
+| 19 | 8am daily scan cron not installed | 🟡 Medium | Set `APIFY_API_TOKEN` first, then: `crontab -e` → `0 8 * * * /bin/bash /path/to/Job-Hunter/scripts/daily-scan.sh >> /path/to/Job-Hunter/logs/daily-scan.log 2>&1` |
+
+### What to test once APIFY_API_TOKEN is set
+
+```bash
+# Test one scraper at a time
+cd ~/Documents/Projects/Antigravity/Job-Hunter
+source venv/bin/activate
+
+python scripts/scrapers/scrape_linkedin.py
+python scripts/scrapers/scrape_indeed.py
+python scripts/scrapers/scrape_glassdoor.py
+python scripts/scrapers/scrape_wellfound.py
+
+# Test non-Apify scrapers (work now)
+python scripts/scrapers/scrape_remoteok.py
+python scripts/scrapers/scrape_yc.py
+python scripts/scrapers/scrape_himalayas.py
+python scripts/scrapers/scrape_hiring_cafe.py
+python scripts/scrapers/scrape_builtin.py
+python scripts/scrapers/scrape_niche.py
+
+# Full pipeline
+bash scripts/daily-scan.sh
+```

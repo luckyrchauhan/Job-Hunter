@@ -338,20 +338,53 @@ def compute_urgency(score: float, days_old: int, description: str) -> dict:
 
 # ─── Main ─────────────────────────────────────────────────────────────────────
 
+def _dedup_key(job: dict) -> str:
+    """
+    Cross-source dedup key: normalized (title + company + location).
+    Same job posted on LinkedIn + Indeed → same key → keep first seen (higher-confidence source).
+    Falls back to source-scoped ID if title/company both empty.
+    """
+    import hashlib
+    title = re.sub(r'\s+', ' ', (job.get("title") or "").lower().strip())
+    company = re.sub(r'\s+', ' ', (job.get("company") or "").lower().strip())
+    # Normalize location: "remote, usa" / "remote" / "united states (remote)" → "remote"
+    loc = (job.get("location") or "").lower()
+    location = "remote" if "remote" in loc else re.sub(r'\s+', ' ', loc.strip())
+
+    if title and company:
+        raw = f"{title}|{company}|{location}"
+        return hashlib.md5(raw.encode()).hexdigest()
+    # No company yet (JS-render issue) — fall back to source-scoped ID
+    return job.get("id", f"unknown-{title}")
+
+
 def load_all_raw_jobs():
     all_jobs = []
-    seen_ids = set()
+    seen_ids = set()      # source-level dedup (same file repeated)
+    seen_dedup = set()    # cross-source dedup (same job on multiple boards)
+    dupes = 0
+
     for fpath in sorted(glob.glob(str(RAW_DIR / "*.json"))):
         try:
             with open(fpath) as f:
                 jobs = json.load(f)
             for job in jobs:
                 jid = job.get("id") or f"{job.get('source','?')}-{job.get('apply_url','')}"
-                if jid not in seen_ids:
-                    seen_ids.add(jid)
-                    all_jobs.append(job)
+                if jid in seen_ids:
+                    continue
+                seen_ids.add(jid)
+
+                dkey = _dedup_key(job)
+                if dkey in seen_dedup:
+                    dupes += 1
+                    continue
+                seen_dedup.add(dkey)
+                all_jobs.append(job)
         except Exception as e:
             print(f"  ⚠ Error reading {fpath}: {e}")
+
+    if dupes:
+        print(f"  🔁 Cross-source dedup removed {dupes} duplicate job(s)")
     return all_jobs
 
 

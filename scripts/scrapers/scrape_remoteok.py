@@ -10,27 +10,35 @@ load_dotenv()
 DATE = datetime.now().strftime("%Y-%m-%d")
 OUT_FILE = f"data/jobs-raw/remoteok-{DATE}.json"
 
-PM_TAGS = {"product", "product manager", "pm", "product management", "saas", "b2b"}
+PM_TITLE_TOKENS = ["product manager", "product management", "head of product", "director of product",
+                   "vp of product", "vp product", "group product manager", "staff product manager",
+                   "principal product manager", "associate product manager", "apm"]
+
+def is_pm_title(title: str) -> bool:
+    """Require 'product manager' variant in title — avoids Designer/SDR/Dev false positives."""
+    t = title.lower()
+    return any(tok in t for tok in PM_TITLE_TOKENS)
 
 def main():
     os.makedirs("data/jobs-raw", exist_ok=True)
-    
+
     headers = {"User-Agent": "Job Hunter Bot (lucky.raajc@gmail.com)"}
     resp = requests.get("https://remoteok.com/api", headers=headers, timeout=30)
-    
+
     if resp.status_code != 200:
         print(f"RemoteOK: HTTP {resp.status_code}"); return
-    
+
     raw = resp.json()
     # First item is metadata
     jobs_raw = [j for j in raw if isinstance(j, dict) and j.get("position")]
-    
+
     pm_jobs = []
     for j in jobs_raw:
+        title = (j.get("position") or "")
         tags = [t.lower() for t in (j.get("tags") or [])]
-        title = (j.get("position") or "").lower()
-        
-        if any(t in PM_TAGS for t in tags) or "product manager" in title or "product management" in title:
+
+        # Title must match PM — tags alone are too broad (catches Designer/SDR/Dev)
+        if is_pm_title(title):
             pm_jobs.append({
                 "id": f"remoteok-{j.get('id','')}",
                 "source": "remoteok",

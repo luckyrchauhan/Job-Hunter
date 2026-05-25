@@ -29,11 +29,14 @@ def main():
     seen = set()
 
     # Himalayas paginates — fetch multiple pages
+    # API: https://himalayas.app/jobs/api?q=product+manager&page=N&limit=50
+    # Note: 'title' param is ignored; 'q' works as keyword search
     for page in range(1, 6):
         try:
             resp = requests.get(
                 "https://himalayas.app/jobs/api",
-                params={"q": "product manager", "page": page, "limit": 50},
+                params={"q": "product manager", "page": page, "limit": 50,
+                        "remoteOnly": "true"},
                 headers=HEADERS, timeout=20
             )
             if resp.status_code != 200:
