@@ -51,8 +51,17 @@ See `config/score-weights.json` for full weights.
 
 ## Cron Schedule
 
-- Daily scan: 8:00 AM EDT
+- Scheduled scans: **8:00 AM, 12:00 PM, 3:00 PM EDT** (`scripts/daily-scan.sh`)
+- Instant watcher: **every 15 minutes, 8am–8pm EDT** (`scripts/watcher.py`) — fires immediate Slack alert for score ≥ 8 + posted < 2hrs, does NOT wait for scheduled scan
 - Deadline check: every 2 hours during business hours
+
+### Cron entries (`crontab -e`):
+```
+0  8 * * * /bin/bash /Users/luckychauhan/Documents/Projects/Antigravity/Job-Hunter/scripts/daily-scan.sh >> /Users/luckychauhan/Documents/Projects/Antigravity/Job-Hunter/logs/daily-scan.log 2>&1
+0 12 * * * /bin/bash /Users/luckychauhan/Documents/Projects/Antigravity/Job-Hunter/scripts/daily-scan.sh >> /Users/luckychauhan/Documents/Projects/Antigravity/Job-Hunter/logs/daily-scan.log 2>&1
+0 15 * * * /bin/bash /Users/luckychauhan/Documents/Projects/Antigravity/Job-Hunter/scripts/daily-scan.sh >> /Users/luckychauhan/Documents/Projects/Antigravity/Job-Hunter/logs/daily-scan.log 2>&1
+*/15 8-20 * * * /Users/luckychauhan/Documents/Projects/Antigravity/Job-Hunter/venv/bin/python /Users/luckychauhan/Documents/Projects/Antigravity/Job-Hunter/scripts/watcher.py >> /Users/luckychauhan/Documents/Projects/Antigravity/Job-Hunter/logs/watcher.log 2>&1
+```
 
 ## Notification Channel
 
@@ -79,7 +88,8 @@ All Claude Code skills are in `skills/` directory:
 
 ## Output Files
 
-- `outputs/tracker.xlsx` — auto-exported from applications.json
+- `outputs/tracker.xlsx` — local Excel backup (auto-exported from applications.json)
+- Google Sheets — live tracker, synced via `scripts/sync_sheets.py` after every scan (requires `GOOGLE_SHEET_ID` + `GOOGLE_SERVICE_ACCOUNT_JSON` in `.env`)
 - `outputs/resumes/` — tailored resumes per job
 - `outputs/cover-letters/` — cover letters per job
 - `outputs/outreach/` — drafted outreach messages
