@@ -1,0 +1,28 @@
+{
+  "dream_companies": [
+    "Anthropic",
+    "OpenAI",
+    "Google",
+    "Microsoft",
+    "Meta",
+    "Apple",
+    "Stripe",
+    "Notion",
+    "Linear",
+    "Figma",
+    "Airtable",
+    "Salesforce",
+    "ServiceNow",
+    "Workday",
+    "SAP"
+  ],
+  "good_fit_companies": [
+    "GlobalLogic",
+    "Thoughtworks",
+    "Accenture",
+    "Deloitte Digital",
+    "McKinsey Digital",
+    "BCG Platinion"
+  ],
+  "blocklist_companies": []
+}

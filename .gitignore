@@ -1,0 +1,43 @@
+# NEVER commit these
+.env
+*.env.local
+
+# Data (may contain PII)
+data/jobs-raw/
+data/jobs-scored.json
+data/leads.json
+data/applications.json
+
+# Outputs (generated files)
+outputs/tracker.xlsx
+outputs/resumes/
+outputs/cover-letters/
+outputs/outreach/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+
+# macOS
+.DS_Store
+.AppleDouble
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
+
+# Node (if any tooling added later)
+node_modules/

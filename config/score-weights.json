@@ -1,0 +1,31 @@
+{
+  "weights": {
+    "role_title_match": 2.0,
+    "ai_llm_keywords": 2.0,
+    "enterprise_platform": 1.5,
+    "supply_chain_domain": 1.5,
+    "location_match": 1.0,
+    "salary_above_minimum": 1.0,
+    "company_stage_fit": 1.0,
+    "skills_overlap": 2.0,
+    "experience_level_match": 1.5,
+    "growth_potential": 0.5
+  },
+  "hard_filters": {
+    "visa_sponsorship": "REQUIRED — discard if not sponsored",
+    "minimum_salary_usd": 120000,
+    "posted_within_days": 7
+  },
+  "score_thresholds": {
+    "strong_match": 8,
+    "good_match": 6,
+    "weak_match": 4,
+    "discard_below": 3
+  },
+  "bonus_signals": {
+    "dream_company": 1.5,
+    "referral_possible": 1.0,
+    "fast_growing_startup": 0.5,
+    "public_company_stability": 0.25
+  }
+}

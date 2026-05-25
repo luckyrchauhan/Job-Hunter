@@ -1,0 +1,32 @@
+{
+  "target_roles": [
+    "Product Manager",
+    "Senior Product Manager",
+    "Associate Product Manager",
+    "APM",
+    "Platform Product Manager",
+    "AI Product Manager",
+    "Technical Product Manager"
+  ],
+  "locations": [
+    "Remote",
+    "Boston, MA",
+    "United States"
+  ],
+  "exclude_locations": [],
+  "minimum_salary_usd": 120000,
+  "visa_sponsorship_required": true,
+  "experience_levels": ["mid", "senior"],
+  "keywords_required": [],
+  "keywords_boost": [
+    "AI", "LLM", "generative AI", "platform", "enterprise",
+    "supply chain", "SaaS", "B2B", "data", "API"
+  ],
+  "keywords_exclude": [
+    "intern only", "unpaid", "volunteer"
+  ],
+  "posted_within_days": 7,
+  "max_jobs_per_source": 100,
+  "daily_scan_time": "08:00",
+  "timezone": "America/Indiana/Indianapolis"
+}

@@ -1,0 +1,12 @@
+{
+  "blocklist_companies": [],
+  "blocklist_keywords": [
+    "unpaid",
+    "commission only",
+    "no base salary",
+    "MLM",
+    "multi-level marketing"
+  ],
+  "blocklist_locations": [],
+  "notes": "Add company names to blocklist_companies to never see jobs from them again."
+}
