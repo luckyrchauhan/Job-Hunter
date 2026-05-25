@@ -43,12 +43,12 @@ blocklist_companies: [] # ← fill this
 
 ## 3. System Overview
 
-A Python-based automation system controlled via Claude Code. Runs on a daily cron job (8am local time). No manual intervention required except final application submission.
+A Python-based automation system controlled via Claude Code. Runs on scheduled cron jobs (8am, 12pm, 3pm EDT) plus a lightweight watcher every 15 minutes for instant high-match alerts. No manual intervention required except final application submission.
 
 ### High-Level Flow
 
 ```
-[Cron 8am]
+[Cron 8am / 12pm / 3pm]
     → Scrapers collect jobs from all sources
     → Deduplication & normalization
     → Claude AI scores each job (1-10) vs resume
@@ -56,8 +56,15 @@ A Python-based automation system controlled via Claude Code. Runs on a daily cro
     → Urgency flagging (apply-now / this-week / monitor / stale)
     → Lead finding (recruiter + hiring manager per company)
     → Claude drafts outreach messages & cover letters
-    → Tracker updated (applications.json → tracker.xlsx)
-    → Telegram notification sent with top matches
+    → Tracker updated (applications.json → Google Sheets live sync)
+    → Slack digest sent with top matches
+
+[Watcher — every 15min, 8am–8pm EDT]
+    → Quick-scrape new postings only (delta)
+    → Score new jobs
+    → IF score ≥ 8 AND posted < 2hrs AND applicants < 50:
+        → Instant Slack alert (no waiting for scheduled scan)
+        → Draft materials + sync Google Sheet
 ```
 
 ---
@@ -269,12 +276,25 @@ When a job scores ≥6 and passes visa check:
 
 ## 10. Notifications
 
-### Telegram Bot (Primary)
+### Slack Webhook (Primary)
 
-- **Immediate alert** for `apply-now` jobs (score ≥7)
-- **Daily digest** at 8:05am — top 10 jobs of the day with scores
+- **Instant alert** for jobs score ≥ 8 AND posted < 2 hours ago — fires immediately via watcher, does NOT wait for scheduled scan
+- **Scheduled digest** at 8:05am, 12:05pm, 3:05pm EDT — top 10 jobs per run with scores
 - **Weekly summary** every Monday — pipeline stats, follow-up reminders
 - **Follow-up reminders** — "You applied to [Company] 7 days ago — follow up?"
+
+### Instant Alert Logic (watcher.py)
+
+Separate lightweight watcher polls every **15 minutes, 8am–8pm EDT**:
+```
+[Watcher — every 15min]
+    → Quick-scrape new postings only (delta, not full scan)
+    → Score each new job
+    → IF score ≥ 8 AND posted < 2hrs AND applicants < 50:
+        → Immediate Slack alert
+        → Draft outreach + tailor resume
+        → Update Google Sheet row
+```
 
 ### Message format example:
 
@@ -282,7 +302,7 @@ When a job scores ≥6 and passes visa check:
 🔴 APPLY NOW — Score: 9/10
 Role: Senior PM — Payments
 Company: Stripe
-Posted: 1 day ago
+Posted: 45 minutes ago
 Salary: $180k–$220k
 Visa: ✅ Confirmed sponsor
 Apply: [link]
@@ -312,7 +332,12 @@ Outreach drafted: outputs/outreach/stripe-pm-2026-05-25.md
 }
 ```
 
-**Auto-exported to:** `outputs/tracker.xlsx` after every run.
+**Live-synced to:** Google Sheets via Sheets API after every run and every status change.
+- Sheet ID stored in `.env` as `GOOGLE_SHEET_ID`
+- Auth via Google Service Account: `.env` → `GOOGLE_SERVICE_ACCOUNT_JSON`
+- Lucky can view/filter/sort anytime from phone or browser
+- Manual notes/edits by Lucky in the sheet are **not overwritten** by system (system only appends/updates its own columns)
+- `outputs/tracker.xlsx` kept as local backup export
 
 ---
 
@@ -380,7 +405,7 @@ The `CLAUDE.md` file at the root tells Claude Code everything it needs:
 - [ ] Create Telegram bot (5 mins via BotFather)
 - [ ] Write notification script
 - [ ] Test daily digest format
-- [ ] Set up cron job (8am daily)
+- [ ] Set up cron jobs (8am, 12pm, 3pm daily) + watcher every 15min
 
 ### Milestone 5 — Outreach & Apply (Day 5–7)
 
