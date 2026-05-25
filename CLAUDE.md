@@ -86,9 +86,9 @@ All Claude Code skills are in `skills/` directory:
 
 ## Project Status
 
-- M1 Foundation: IN PROGRESS
+- M1 Foundation: COMPLETE
 - M2 Search: NOT STARTED
 - M3 Score & Filter: COMPLETE
-- M4 Notify: NOT STARTED
+- M4 Notify: COMPLETE
 - M5 Outreach & Apply: COMPLETE
 - M6 Track & Follow-up: COMPLETE
