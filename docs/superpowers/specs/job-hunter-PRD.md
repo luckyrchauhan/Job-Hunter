@@ -32,7 +32,7 @@ name: Lucky Chauhan
 email: lucky.raajc@gmail.com
 target_role: Product Manager
 experience_level: [Senior PM / APM/ PM] # ← fill this
-locations: [Remote, Boston, USA] # ← fill this
+locations: [Remote, anywhere in the USA] # ← fill this
 visa_sponsorship_required: true # ← fill this (H1B?)
 minimum_salary_usd: 120000 # ← fill this
 dream_companies: [] # ← fill this
@@ -184,25 +184,25 @@ Every job gets two signals: **time since posted** and **total applications submi
 
 ### 7a. Time-Based Urgency Tiers
 
-| Tag | Posted Age | Action |
-|-----|-----------|--------|
-| 🔴🔴 `apply-now-critical` | < 1 hour ago | Immediate Telegram alert — drop everything |
-| 🔴 `apply-now-hot` | 1–5 hours ago | Immediate Telegram alert |
-| 🟠 `apply-now-today` | 5–15 hours ago | Telegram alert within current session |
-| 🟡 `apply-soon-24h` | 15–24 hours ago | In next daily digest, top of list |
-| 🟡 `apply-soon-1d` | 1–2 days ago | In daily digest |
-| 🟢 `apply-this-week-2d` | 2–5 days ago | In daily digest, lower priority |
-| 🔵 `monitor` | 5–7 days ago | In daily digest only if score ≥8 |
-| ⚫ `stale` | > 7 days ago | Skip — not notified |
+| Tag                       | Posted Age      | Action                                     |
+| ------------------------- | --------------- | ------------------------------------------ |
+| 🔴🔴 `apply-now-critical` | < 1 hour ago    | Immediate Telegram alert — drop everything |
+| 🔴 `apply-now-hot`        | 1–5 hours ago   | Immediate Telegram alert                   |
+| 🟠 `apply-now-today`      | 5–15 hours ago  | Telegram alert within current session      |
+| 🟡 `apply-soon-24h`       | 15–24 hours ago | In next daily digest, top of list          |
+| 🟡 `apply-soon-1d`        | 1–2 days ago    | In daily digest                            |
+| 🟢 `apply-this-week-2d`   | 2–5 days ago    | In daily digest, lower priority            |
+| 🔵 `monitor`              | 5–7 days ago    | In daily digest only if score ≥8           |
+| ⚫ `stale`                | > 7 days ago    | Skip — not notified                        |
 
 ### 7b. Application Count Gate (Notification Filter)
 
 > **Rule:** Only send Telegram notifications if the job has **fewer than 50 applications**. If 50+ applicants have already applied, suppress the notification regardless of urgency tier.
 
-| Applications Count | Notification Behavior |
-|-------------------|----------------------|
-| < 50 applicants | ✅ Notify — all urgency tiers apply normally |
-| ≥ 50 applicants | 🔕 Suppress notification — job still logged but not alerted |
+| Applications Count | Notification Behavior                                       |
+| ------------------ | ----------------------------------------------------------- |
+| < 50 applicants    | ✅ Notify — all urgency tiers apply normally                |
+| ≥ 50 applicants    | 🔕 Suppress notification — job still logged but not alerted |
 
 **Note:** Application count is scraped from the listing where available (LinkedIn shows this). If count is unavailable, default to notifying (assume < 50).
 
@@ -222,6 +222,7 @@ IF posted > 7 days ago:
 ## 8. Visa & Blocklist Filtering
 
 **Visa check** (if `visa_sponsorship_required: true`):
+
 1. Scan job description for sponsorship keywords (`H1B`, `will sponsor`, `visa sponsorship`, `work authorization`)
 2. Cross-reference company across **all H1B data sources** (checked in parallel)
 3. Aggregate confidence score across sources → final tag assigned
@@ -229,23 +230,23 @@ IF posted > 7 days ago:
 
 ### H1B Data Sources (checked in parallel)
 
-| Source | URL | What it provides |
-|--------|-----|-----------------|
-| H1B Data | h1bdata.info | Historical H1B filings by company |
-| H1B Grader | h1bgrader.com | Company H1B approval rates + grades |
-| H1B Database | h1bsalary.info | Salary + filing records |
-| H1B Metrics | h1bmetrics.com | Trends, approval rates, denial rates |
-| MyVisaJobs | myvisajobs.com | Sponsor history + job listings |
-| USCIS Public Data | uscis.gov | Official LCA/H1B disclosure data |
+| Source            | URL            | What it provides                     |
+| ----------------- | -------------- | ------------------------------------ |
+| H1B Data          | h1bdata.info   | Historical H1B filings by company    |
+| H1B Grader        | h1bgrader.com  | Company H1B approval rates + grades  |
+| H1B Database      | h1bsalary.info | Salary + filing records              |
+| H1B Metrics       | h1bmetrics.com | Trends, approval rates, denial rates |
+| MyVisaJobs        | myvisajobs.com | Sponsor history + job listings       |
+| USCIS Public Data | uscis.gov      | Official LCA/H1B disclosure data     |
 
 ### Sponsorship Confidence Tags
 
-| Tag | Criteria | Action |
-|-----|---------|--------|
-| ✅ `confirmed` | Listed as sponsor on 2+ sources with recent filings | Proceed |
-| 🟡 `likely` | Found on 1 source OR JD says "will sponsor" | Proceed with caution note |
-| ❓ `unclear` | No data found, JD silent on visa | Flag for manual check |
-| ❌ `no-sponsorship` | JD explicitly says "no sponsorship" OR confirmed deny pattern | Auto-skip + blocklist |
+| Tag                 | Criteria                                                      | Action                    |
+| ------------------- | ------------------------------------------------------------- | ------------------------- |
+| ✅ `confirmed`      | Listed as sponsor on 2+ sources with recent filings           | Proceed                   |
+| 🟡 `likely`         | Found on 1 source OR JD says "will sponsor"                   | Proceed with caution note |
+| ❓ `unclear`        | No data found, JD silent on visa                              | Flag for manual check     |
+| ❌ `no-sponsorship` | JD explicitly says "no sponsorship" OR confirmed deny pattern | Auto-skip + blocklist     |
 
 **Blocklist:** Companies in `blocklist.json` are never shown, never processed.
 
@@ -358,21 +359,13 @@ The `CLAUDE.md` file at the root tells Claude Code everything it needs:
 - [x] Init git repo
 - [x] Extract resume into `data/my-resume.md`
 
-### Milestone 2 — Search (Day 2–3) ✅ SKILLS WRITTEN — ⏳ PENDING: Apify key + live test
+### Milestone 2 — Search (Day 2–3)
 
-- [x] Write `skills/search/linkedin.md` skill (Apify + Playwright fallback)
-- [x] Write `skills/search/indeed.md` skill (Apify + Playwright fallback)
-- [x] Write `skills/search/glassdoor.md` skill
-- [x] Write `skills/search/wellfound.md` skill (Playwright)
-- [x] Write `skills/search/ycombinator.md` skill (visa=true filter)
-- [x] Write `skills/search/levels-fyi.md` skill (salary data)
-- [x] Write `skills/search/builtin.md` skill
-- [x] Write `skills/search/niche-boards.md` skill (WWR, RemoteOK, Himalayas, etc.)
-- [x] Write `skills/search/company-direct.md` skill (180+ company career pages)
-- [x] Write `scripts/daily-scan.sh` orchestrator (all 9 sources, phased)
-- [ ] Set up Apify account + get free API key → fill in `.env`
-- [ ] Install Python deps (requests, playwright, beautifulsoup4)
-- [ ] Live test: run daily-scan.sh → verify jobs land in `data/jobs-raw/`
+- [ ] Write `skills/search/linkedin.md` skill
+- [ ] Write `skills/search/indeed.md` skill
+- [ ] Set up Apify account + get free API key
+- [ ] Test scraping — get raw jobs into `data/jobs-raw/`
+- [ ] Add 2–3 more sources (Glassdoor, Wellfound, company-direct)
 
 ### Milestone 3 — Score & Filter (Day 3–4)
 
