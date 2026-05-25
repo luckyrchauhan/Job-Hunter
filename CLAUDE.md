@@ -29,6 +29,8 @@ See `data/my-resume.md` for full resume.
 - Supply chain + SAP S/4HANA domain depth
 - Data analytics (SQL, Python)
 - PMP + CSM certified
+- MBA
+- MS in Digital technology
 
 ## Scoring Weights
 
