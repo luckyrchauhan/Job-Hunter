@@ -28,5 +28,11 @@
   "posted_within_days": 7,
   "max_jobs_per_source": 100,
   "daily_scan_time": "08:00",
-  "timezone": "America/Indiana/Indianapolis"
+  "timezone": "America/Indiana/Indianapolis",
+  "instant_alert_score_threshold": 8,
+  "instant_alert_max_age_hours": 2,
+  "instant_alert_max_applicants": 50,
+  "watcher_poll_interval_minutes": 15,
+  "watcher_active_hours_start": 8,
+  "watcher_active_hours_end": 20
 }

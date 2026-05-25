@@ -1,0 +1,20 @@
+# Job Hunter — Python dependencies
+
+# Scraping
+playwright>=1.40.0
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+
+# Google Sheets sync
+gspread>=6.0.0
+google-auth>=2.0.0
+
+# Excel local backup
+openpyxl>=3.1.0
+
+# AI scoring + drafting
+anthropic>=0.25.0
+
+# Utilities
+python-dotenv>=1.0.0
