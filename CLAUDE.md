@@ -90,5 +90,5 @@ All Claude Code skills are in `skills/` directory:
 - M2 Search: NOT STARTED
 - M3 Score & Filter: COMPLETE
 - M4 Notify: NOT STARTED
-- M5 Outreach & Apply: NOT STARTED
+- M5 Outreach & Apply: COMPLETE
 - M6 Track & Follow-up: NOT STARTED
