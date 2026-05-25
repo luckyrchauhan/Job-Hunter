@@ -88,24 +88,32 @@ All Claude Code skills are in `skills/` directory:
 
 | Source | Script | Skill | Status |
 |--------|--------|-------|--------|
-| LinkedIn | `scripts/scrapers/scrape_linkedin.py` | `skills/search/linkedin.md` | 🔴 Not written |
-| Indeed | `scripts/scrapers/scrape_indeed.py` | `skills/search/indeed.md` | 🟡 Partial (bot protection) |
-| Glassdoor | `scripts/scrapers/scrape_glassdoor.py` | `skills/search/glassdoor.md` | 🔴 Not written |
-| Wellfound | `scripts/scrapers/scrape_wellfound.py` | `skills/search/wellfound.md` | 🔴 Not written |
-| Himalayas | `scripts/scrapers/scrape_himalayas.py` | — | 🟡 Partial (filter broken) |
-| RemoteOK | `scripts/scrapers/scrape_remoteok.py` | — | 🟡 Partial (tag filter loose) |
-| YC Jobs | `scripts/scrapers/scrape_yc.py` | `skills/search/ycombinator.md` | 🔴 Selector broken |
+| LinkedIn | `scripts/scrapers/scrape_linkedin.py` | `skills/search/linkedin.md` | ✅ Built — needs APIFY_API_TOKEN |
+| Indeed | `scripts/scrapers/scrape_indeed.py` | `skills/search/indeed.md` | ✅ Fixed — Apify primary, Playwright fallback |
+| Glassdoor | `scripts/scrapers/scrape_glassdoor.py` | `skills/search/glassdoor.md` | ✅ Built — needs APIFY_API_TOKEN |
+| Wellfound | `scripts/scrapers/scrape_wellfound.py` | `skills/search/wellfound.md` | ✅ Built — Apify + Playwright fallback |
+| Himalayas | `scripts/scrapers/scrape_himalayas.py` | — | ✅ Fixed — remoteOnly param added |
+| RemoteOK | `scripts/scrapers/scrape_remoteok.py` | — | ✅ Fixed — title filter tightened |
+| YC Jobs | `scripts/scrapers/scrape_yc.py` | `skills/search/ycombinator.md` | ✅ Fixed — JSON API primary + Playwright fallback |
 | Hiring Cafe | `scripts/scrapers/scrape_hiring_cafe.py` | `skills/search/hiring-cafe.md` | ✅ Built |
-| Levels.fyi | — | `skills/search/levels-fyi.md` | 🔴 Not written |
-| Builtin | — | `skills/search/builtin.md` | 🔴 Not written |
-| Company Direct | — | `skills/search/company-direct.md` | 🔴 Not written |
-| Niche Boards | — | `skills/search/niche-boards.md` | 🔴 Not written |
+| Levels.fyi | — | `skills/search/levels-fyi.md` | 🔴 Not written (low priority) |
+| Builtin | `scripts/scrapers/scrape_builtin.py` | `skills/search/builtin.md` | ✅ Built — API + Playwright fallback |
+| Company Direct | `scripts/scrapers/scrape_company_direct.py` | `skills/search/company-direct.md` | ✅ Built — 20 companies, Mondays only |
+| Niche Boards | `scripts/scrapers/scrape_niche.py` | `skills/search/niche-boards.md` | ✅ Built — Pallet API + ProductHunt |
 
 ## Project Status
 
-- M1 Foundation: COMPLETE
-- M2 Search: NOT STARTED
-- M3 Score & Filter: COMPLETE
-- M4 Notify: COMPLETE
-- M5 Outreach & Apply: COMPLETE
-- M6 Track & Follow-up: COMPLETE
+- M1 Foundation: ✅ COMPLETE
+- M2 Search: ✅ COMPLETE — all scrapers built/fixed; needs APIFY_API_TOKEN to run Apify sources
+- M3 Score & Filter: ✅ COMPLETE
+- M4 Notify: ✅ COMPLETE
+- M5 Outreach & Apply: ✅ COMPLETE
+- M6 Track & Follow-up: ✅ COMPLETE
+
+## Remaining Config (not code)
+
+| Item | Priority | Action |
+|------|----------|--------|
+| `APIFY_API_TOKEN` | 🔴 High | Set in `.env` — enables LinkedIn, Indeed (Apify), Glassdoor, Wellfound |
+| `ANTHROPIC_API_KEY` | 🟡 Medium | Set in `.env` — enables AI resume/cover letter drafting (M5). Templates work without it. |
+| 8am cron | 🟡 Medium | `crontab -e` → `0 8 * * * /bin/bash /path/to/Job-Hunter/scripts/daily-scan.sh >> /path/to/Job-Hunter/logs/daily-scan.log 2>&1` |
