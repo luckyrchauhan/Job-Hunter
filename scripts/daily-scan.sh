@@ -74,6 +74,7 @@ run_scraper "Monster"        "scripts/scrapers/scrape_monster.py"
 run_scraper "Niche Boards"   "scripts/scrapers/scrape_niche.py"
 run_scraper "Greenhouse+Lever" "scripts/scrapers/scrape_greenhouse.py"
 run_scraper "ZipRecruiter"   "scripts/scrapers/scrape_ziprecruiter.py"
+run_scraper "Google Jobs"    "scripts/scrapers/scrape_google_jobs.py"
 run_scraper "AI Jobs + Otta" "scripts/scrapers/scrape_aijobs.py"
 
 # Company direct — weekly only (Mondays)
