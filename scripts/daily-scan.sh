@@ -72,12 +72,23 @@ run_scraper "Builtin"        "scripts/scrapers/scrape_builtin.py"
 run_scraper "Dice"           "scripts/scrapers/scrape_dice.py"
 run_scraper "Monster"        "scripts/scrapers/scrape_monster.py"
 run_scraper "Niche Boards"   "scripts/scrapers/scrape_niche.py"
+run_scraper "Greenhouse+Lever" "scripts/scrapers/scrape_greenhouse.py"
+run_scraper "ZipRecruiter"   "scripts/scrapers/scrape_ziprecruiter.py"
+run_scraper "AI Jobs + Otta" "scripts/scrapers/scrape_aijobs.py"
 
 # Company direct — weekly only (Mondays)
 if [ "$(date +%u)" = "1" ]; then
     run_scraper "Company Career Pages" "scripts/scrapers/scrape_company_direct.py"
 else
     echo "  ⚡ Company Direct — runs Mondays only (skipping)"
+fi
+
+echo ""
+echo "--- PHASE 1b: ENRICH LINKEDIN (Firecrawl — top 20 jobs) ---"
+if [ -n "$FIRECRAWL_API_KEY" ]; then
+    "$PYTHON" scripts/enrich_linkedin.py --max 20 && echo "  ✓ LinkedIn enriched" || echo "  ✗ LinkedIn enrichment FAILED (continuing)"
+else
+    echo "  ⚡ FIRECRAWL_API_KEY not set — skipping LinkedIn enrichment"
 fi
 
 echo ""
