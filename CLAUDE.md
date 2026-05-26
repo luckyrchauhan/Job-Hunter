@@ -52,6 +52,35 @@ See `config/score-weights.json` for full weights.
 - NEVER skip visa sponsorship check
 - NEVER send outreach without my review
 
+## Scraper Rules
+
+### Method per source (DO NOT change without testing)
+
+| Source | Method | Reason |
+|--------|--------|--------|
+| LinkedIn | Playwright only | Apify actors don't scrape LinkedIn search results reliably |
+| Indeed | Apify `MXLpngmVpE8WTESQr` | Full JD + salary, 600k runs |
+| Glassdoor | Apify `vKjDv4zCNPfku2byp` | Full JD + salary |
+| Wellfound | Apify actor | Full JD + salary |
+| ZipRecruiter | Apify `bkwSYfgLsyEazgOvf` | URL-based input, full JD + salary, 900+ runs |
+| Google Jobs | Apify `CkLDY9GAQf6QlP6GP` | 25k+ runs, aggregates all boards, full JD |
+| Himalayas | Public JSON API | Free, full JD, no auth needed |
+| Hiring Cafe | Public API | Free, full JD |
+| Greenhouse | Free public API `boards-api.greenhouse.io` | No key, full JD, 50+ companies |
+| Lever | Free public API `api.lever.co` | No key, full JD |
+| Dice | Playwright | Public search, full JD |
+| RemoteOK | Public JSON API | Free, no auth |
+| YC Jobs | Public JSON API | Free, no auth |
+| Builtin | Public API | Free |
+| Monster | Broken — 403 | Skip until fixed |
+| Firecrawl | LinkedIn enrichment ONLY for top 20 jobs | LinkedIn.com blocks Firecrawl on enterprise pages |
+
+### Hard rules
+- NEVER use Apify for LinkedIn
+- NEVER run Apify scrapers in parallel — free tier hits concurrent limit; run sequentially in daily-scan.sh
+- NEVER use Firecrawl for LinkedIn job pages — blocked at infrastructure level
+- Apify free tier = ~$5/month compute units; monitor usage at apify.com/billing
+
 ## Cron Schedule
 
 - Scheduled scans: **8:00 AM, 12:00 PM, 3:00 PM EDT** (`scripts/daily-scan.sh`)
