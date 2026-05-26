@@ -191,7 +191,7 @@ def generate_outreach(conn: dict, job: dict) -> str:
             f"I'm currently exploring PM opportunities and saw that {job_company} has an opening for {job_title}. "
             f"Given your experience{f' as {position}' if position else ' there'}, I'd love to get your perspective on the team and culture — even a quick 15-minute chat would mean a lot.\n\n"
             f"Would you be open to connecting? Happy to share my background if helpful.\n\n"
-            f"Thanks so much,\nLucky"
+            f"Thanks so much,\n[YOUR_NAME]"
         )
     elif tier == 2:
         # Previous company connection
@@ -201,7 +201,7 @@ def generate_outreach(conn: dict, job: dict) -> str:
             f"I was looking through my network and realized we both have {shared} in common — small world!\n\n"
             f"I'm currently looking at a {job_title} role at {job_company} and thought you might have some insight into what the team is like there. "
             f"If you have a few minutes for a quick chat, I'd really appreciate it — no pressure at all.\n\n"
-            f"Hope things are going well on your end!\n\nBest,\nLucky"
+            f"Hope things are going well on your end!\n\nBest,\n[YOUR_NAME]"
         )
     else:
         # General connection
@@ -211,7 +211,7 @@ def generate_outreach(conn: dict, job: dict) -> str:
             f"I've been a PM for 11+ years across enterprise platforms and AI products, and this role seems like a great fit.\n\n"
             f"Would you be open to a quick chat about the team culture and what success looks like in this role? "
             f"I'd love to learn more before applying — and happy to share my background too.\n\n"
-            f"Thanks for considering it!\n\nBest,\nLucky"
+            f"Thanks for considering it!\n\nBest,\n[YOUR_NAME]"
         )
     return msg
 
