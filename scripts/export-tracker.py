@@ -59,18 +59,23 @@ STATUS_COLORS = {
 }
 
 COLUMNS = [
+    ("Title",            32),
     ("Company",          20),
-    ("Role",             32),
+    ("Location",         18),
+    ("Posted",           12),
+    ("H1B Status",       18),
     ("Score",             7),
-    ("Visa",             12),
+    ("Tier",             10),
+    ("Domain Hit",       14),
+    ("Salary",           18),
+    ("URL",              40),
+    ("Slack Sent",       11),
+    # Application tracking
     ("Status",           15),
     ("Applied Date",     13),
     ("Follow-up Due",    13),
     ("Urgency",          16),
-    ("Salary",           18),
     ("Outreach Contact", 22),
-    ("Outreach Sent",    14),
-    ("Apply URL",        40),
     ("Notes",            30),
     ("Outcome",          15),
 ]
@@ -144,18 +149,22 @@ def make_workbook(apps: list) -> openpyxl.Workbook:
         data_align = Alignment(vertical="center", wrap_text=False)
 
         values = [
+            app.get("role", app.get("title", "")),
             app.get("company", ""),
-            app.get("role", ""),
+            app.get("location", ""),
+            app.get("posted_date", ""),
+            app.get("visa_check_note", app.get("visa", "")),
             app.get("score", ""),
-            app.get("visa", ""),
+            app.get("score_band", ""),
+            app.get("domain_hit", ""),
+            app.get("salary_text", ""),
+            app.get("apply_url", app.get("url", "")),
+            "Yes" if app.get("slack_sent") else "No",
             status,
             app.get("applied_date", ""),
             follow_due,
             app.get("urgency", ""),
-            app.get("salary_text", ""),
             app.get("outreach_contact", ""),
-            "Yes" if app.get("outreach_sent") else "No",
-            app.get("apply_url", ""),
             app.get("notes", ""),
             app.get("outcome", ""),
         ]

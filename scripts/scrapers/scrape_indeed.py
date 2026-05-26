@@ -1,7 +1,8 @@
 """
 Indeed Job Scraper
-Primary: Apify actor valig/indeed-jobs-scraper (company name in employer.name)
-Fallback: Playwright (slower, bot-protected)
+Primary:  Apify actor valig/indeed-jobs-scraper
+Fallback 1: JobSpy (python-jobspy, free, no key)
+Fallback 2: Playwright (slower, bot-protected)
 Saves to: data/jobs-raw/indeed-YYYY-MM-DD.json
 
 Usage:
@@ -193,6 +194,66 @@ async def scrape_playwright_search(page, q: str, l: str) -> list:
     return jobs
 
 
+def scrape_jobspy() -> list:
+    """JobSpy fallback — free, no API key, full JD + salary."""
+    try:
+        from jobspy import scrape_jobs
+    except ImportError:
+        print("  ⚠ python-jobspy not installed — skipping JobSpy fallback")
+        return []
+
+    def _safe_int(v):
+        try:
+            f = float(v)
+            return int(f) if f == f else None
+        except (TypeError, ValueError):
+            return None
+
+    all_jobs, seen = [], set()
+    for s in SEARCHES:
+        try:
+            df = scrape_jobs(
+                site_name=["indeed"],
+                search_term=s["position"],
+                location=s["location"],
+                results_wanted=25,
+                hours_old=336,
+                country_indeed="USA",
+            )
+            if df is None or len(df) == 0:
+                continue
+            for _, row in df.iterrows():
+                r = row.to_dict()
+                title = str(r.get("title") or "")
+                if not is_pm_title(title):
+                    continue
+                uid = str(r.get("id") or f"{r.get('company')}|{title}")
+                if uid in seen:
+                    continue
+                seen.add(uid)
+                sal_min = _safe_int(r.get("min_amount"))
+                sal_max = _safe_int(r.get("max_amount"))
+                loc = str(r.get("location") or s["location"])
+                all_jobs.append({
+                    "id": f"indeed-jobspy-{uid}",
+                    "source": "indeed",
+                    "title": title.strip(),
+                    "company": str(r.get("company") or "").strip(),
+                    "location": loc,
+                    "remote": r.get("is_remote") is True or "remote" in loc.lower(),
+                    "description": str(r.get("description") or ""),
+                    "salary_min": sal_min,
+                    "salary_max": sal_max,
+                    "salary_text": f"${sal_min:,}–${sal_max:,}" if sal_min and sal_max else "",
+                    "posted_date": str(r.get("date_posted") or DATE)[:10],
+                    "apply_url": str(r.get("job_url") or ""),
+                    "scraped_at": datetime.now().isoformat(),
+                })
+        except Exception as e:
+            print(f"  ⚠ JobSpy error for '{s['position']}': {e}")
+    return all_jobs
+
+
 async def scrape_playwright() -> list:
     from playwright.async_api import async_playwright
     import random
@@ -234,15 +295,25 @@ def main():
     os.makedirs("data/jobs-raw", exist_ok=True)
 
     jobs = []
+
+    # Tier 1: Apify (primary — full JD + salary)
     if not args.playwright and APIFY_TOKEN:
         print("  Using Apify (primary)...")
         jobs = scrape_apify(max_results=args.max)
 
+    # Tier 2: JobSpy (free fallback — full JD + salary, no key needed)
+    if not jobs and not args.playwright:
+        print("  Apify returned 0 — falling back to JobSpy...")
+        jobs = scrape_jobspy()
+        if jobs:
+            print(f"  JobSpy recovered {len(jobs)} jobs")
+
+    # Tier 3: Playwright (last resort — card-level only)
     if not jobs:
         if not APIFY_TOKEN and not args.playwright:
             print("  ⚠ APIFY_API_TOKEN not set — falling back to Playwright")
         else:
-            print("  Apify returned 0 results — falling back to Playwright")
+            print("  JobSpy also empty — falling back to Playwright")
         jobs = asyncio.run(scrape_playwright())
 
     # Deduplicate

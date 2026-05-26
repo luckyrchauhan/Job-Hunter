@@ -13,11 +13,15 @@ import json
 import os
 import glob
 import re
+import time
+import urllib.request
+import urllib.parse
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 BASE_DIR = Path(__file__).parent.parent
 RAW_DIR = BASE_DIR / "data" / "jobs-raw"
+H1B_CACHE_FILE = BASE_DIR / "data" / "h1b-cache.json"
 SCORED_FILE = BASE_DIR / "data" / "jobs-scored.json"
 COMPANIES_FILE = BASE_DIR / "config" / "target-companies.json"
 
@@ -65,6 +69,94 @@ SPONSOR_PHRASES = [
     "h-1b",
 ]
 
+def load_h1b_cache() -> dict:
+    if H1B_CACHE_FILE.exists():
+        with open(H1B_CACHE_FILE) as f:
+            return json.load(f)
+    return {}
+
+def save_h1b_cache(cache: dict):
+    with open(H1B_CACHE_FILE, "w") as f:
+        json.dump(cache, f, indent=2)
+
+_H1B_CACHE = load_h1b_cache()
+
+def lookup_h1b_history(company: str) -> dict:
+    """
+    Query h1bdata.info for company's H1B petition history.
+    Returns: {count, years_active, recent_year, score_boost, note}
+    Cached in data/h1b-cache.json to avoid repeat hits.
+    score_boost: 0.0 (never) / 0.3 (rare) / 0.6 (consistent) / 1.0 (heavy)
+    """
+    norm = normalize_company(company)
+    if not norm:
+        return {"count": 0, "score_boost": 0.0, "note": "no company name"}
+
+    # Return cached result (valid 30 days)
+    cached = _H1B_CACHE.get(norm)
+    if cached:
+        age_days = (time.time() - cached.get("cached_at", 0)) / 86400
+        if age_days < 30:
+            return cached
+
+    try:
+        query = urllib.parse.urlencode({"em": company, "job": "", "city": "", "year": "all"})
+        url = f"https://h1bdata.info/index.php?{query}"
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=8) as resp:
+            html = resp.read().decode("utf-8", errors="ignore")
+
+        # Parse table rows
+        rows = re.findall(r'<tr[^>]*>.*?</tr>', html, re.DOTALL)
+        years_seen = set()
+        petition_count = 0
+        for row in rows:
+            cells = re.findall(r'<td[^>]*>(.*?)</td>', row, re.DOTALL)
+            if len(cells) >= 5:
+                clean = [re.sub('<[^>]+>', '', c).strip() for c in cells]
+                if clean[0]:  # has employer name
+                    petition_count += 1
+                    # date is usually last cell: MM/DD/YYYY
+                    date_match = re.search(r'(\d{4})$', clean[-1])
+                    if date_match:
+                        years_seen.add(date_match.group(1))
+
+        # Score boost tiers
+        if petition_count >= 50:
+            boost = 1.0
+            note = f"Heavy H1B sponsor: {petition_count} petitions, {len(years_seen)} years"
+        elif petition_count >= 10:
+            boost = 0.7
+            note = f"Consistent H1B sponsor: {petition_count} petitions"
+        elif petition_count >= 3:
+            boost = 0.4
+            note = f"Occasional H1B sponsor: {petition_count} petitions"
+        elif petition_count >= 1:
+            boost = 0.2
+            note = f"Rare H1B sponsor: {petition_count} petition(s)"
+        else:
+            boost = 0.0
+            note = "No H1B history found — manual verify"
+
+        result = {
+            "count": petition_count,
+            "years_active": sorted(years_seen),
+            "score_boost": boost,
+            "note": note,
+            "cached_at": time.time(),
+            "source": "h1bdata.info",
+        }
+        _H1B_CACHE[norm] = result
+        save_h1b_cache(_H1B_CACHE)
+        return result
+
+    except Exception as e:
+        result = {"count": 0, "score_boost": 0.0, "note": f"H1B lookup failed: {e}", "cached_at": time.time()}
+        _H1B_CACHE[norm] = result
+        save_h1b_cache(_H1B_CACHE)
+        return result
+
+
 def check_visa(company: str, description: str) -> dict:
     norm = normalize_company(company)
     desc_lower = (description or "").lower()
@@ -111,11 +203,29 @@ def check_visa(company: str, description: str) -> dict:
                 "visa_check_note": f"JD mentions: '{phrase}'",
             }
 
-    return {
-        "visa_status": "unknown",
-        "sponsorship_confirmed": False,
-        "visa_check_note": "Company not in tiers, no JD signal — manual verify",
-    }
+    # Fall back to H1B database lookup
+    h1b = lookup_h1b_history(company)
+    if h1b["count"] >= 10:
+        return {
+            "visa_status": "h1b_history_strong",
+            "sponsorship_confirmed": True,
+            "visa_check_note": h1b["note"],
+            "h1b_history": h1b,
+        }
+    elif h1b["count"] >= 1:
+        return {
+            "visa_status": "h1b_history_weak",
+            "sponsorship_confirmed": False,  # don't confirm but don't discard
+            "visa_check_note": h1b["note"],
+            "h1b_history": h1b,
+        }
+    else:
+        return {
+            "visa_status": "unknown",
+            "sponsorship_confirmed": False,
+            "visa_check_note": h1b["note"],
+            "h1b_history": h1b,
+        }
 
 # ─── Fit Score ────────────────────────────────────────────────────────────────
 
@@ -150,6 +260,10 @@ AI_KEYWORDS = [
     "artificial intelligence", "rag", "prompt engineering", "foundation model",
     "agentic", "chatgpt", "gpt", "claude", "large language model",
     "nlp", "vector", "embedding", "fine-tuning",
+    " ai ", "ai/ml", "ml model", "ai-powered", "ai-driven", "ai features",
+    "ai platform", "ai sdlc", "ai tools", "ai strategy", "ai roadmap",
+    "ai integration", "ai agent", "ai assistant", "copilot", "automation ai",
+    "data science", "predictive", "recommendation engine",
 ]
 
 SKILLS_KEYWORDS = [
@@ -158,14 +272,17 @@ SKILLS_KEYWORDS = [
     "analytics", "data-driven", "stakeholder", "cross-functional",
 ]
 
-ENTERPRISE_KEYWORDS = [
-    "enterprise", "platform", "b2b", "saas", "multi-tenant", "global",
-    "large scale", "5000", "10000",
-]
-
-SUPPLY_CHAIN_KEYWORDS = [
-    "supply chain", "logistics", "procurement", "manufacturing", "erp",
-    "warehouse", "inventory", "fulfillment", "operations",
+# Domain fit — Lucky's 9-yr marine/mechanical engineering background is a differentiator
+DOMAIN_KEYWORDS = [
+    # Marine / mechanical / industrial
+    "marine", "maritime", "naval", "vessel", "offshore", "mechanical",
+    "industrial", "manufacturing", "automotive", "auto", "aerospace",
+    # Supply chain / logistics / ops
+    "supply chain", "logistics", "procurement", "warehouse", "inventory",
+    "fulfillment", "operations", "fleet", "dispatch",
+    # ERP / enterprise ops
+    "erp", "sap", "s/4hana", "oracle", "netsuite", "workday",
+    "digital transformation", "process improvement", "lean", "six sigma",
 ]
 
 SENIOR_KEYWORDS = [
@@ -176,6 +293,17 @@ SENIOR_KEYWORDS = [
 REMOTE_KEYWORDS = [
     "remote", "fully remote", "work from anywhere", "distributed",
     "work from home", "wfh",
+]
+
+MAJOR_METRO_KEYWORDS = [
+    "new york", "new york city", "nyc", "san francisco", "sf", "bay area",
+    "seattle", "chicago", "austin", "boston", "los angeles", "la", "denver",
+    "atlanta", "miami", "dallas", "washington dc", "washington, dc",
+]
+
+PREFERRED_LOCATION_KEYWORDS = [
+    "remote", "fully remote", "work from anywhere", "distributed", "wfh",
+    "indiana", "indianapolis", "boston",
 ]
 
 
@@ -247,10 +375,10 @@ def score_job(job: dict) -> dict:
     # ── Fit scoring ──
     breakdown = {}
 
-    # AI/LLM (weight 2.0)
-    breakdown["ai_llm"] = round(score_keywords(combined_text, AI_KEYWORDS) * 2.0, 2)
+    # 1. AI/LLM (weight 1.0) — PM touching AI, not deep ML eng
+    breakdown["ai_llm"] = round(score_keywords(combined_text, AI_KEYWORDS) * 1.0, 2)
 
-    # Title match (weight 2.0)
+    # 2. Title match (weight 2.0)
     if any(t in title for t in ["senior", "principal", "staff", "lead", "director", "vp"]):
         title_score = 2.0
     elif title_is_pm:
@@ -259,23 +387,34 @@ def score_job(job: dict) -> dict:
         title_score = 0.8
     breakdown["title_match"] = title_score
 
-    # Skills overlap (weight 2.0)
+    # 3. Skills overlap (weight 2.0)
     breakdown["skills_overlap"] = round(score_keywords(combined_text, SKILLS_KEYWORDS) * 2.0, 2)
 
-    # Enterprise (weight 1.5)
-    breakdown["enterprise"] = round(score_keywords(combined_text, ENTERPRISE_KEYWORDS) * 1.5, 2)
+    # 4. Domain fit (weight 2.0) — marine/mech/industrial/supply-chain/ERP differentiator
+    breakdown["domain_fit"] = round(score_keywords(combined_text, DOMAIN_KEYWORDS) * 2.0, 2)
 
-    # Supply chain (weight 1.5)
-    breakdown["supply_chain"] = round(score_keywords(combined_text, SUPPLY_CHAIN_KEYWORDS) * 1.5, 2)
+    # 5. Experience level (weight 2.0) — no mention = max (open to non-traditional backgrounds)
+    exp_hits = sum(1 for kw in SENIOR_KEYWORDS if kw in combined_text)
+    if exp_hits == 0:
+        breakdown["experience"] = 2.0  # no requirement stated = open role
+    else:
+        breakdown["experience"] = round(min(1.0, exp_hits / max(1, len(SENIOR_KEYWORDS) * 0.3)) * 2.0, 2)
 
-    # Experience level (weight 1.5)
-    breakdown["experience"] = round(score_keywords(combined_text, SENIOR_KEYWORDS) * 1.5, 2)
+    # 6. Location (weight 2.0)
+    is_preferred = (
+        job.get("remote") or
+        any(kw in location for kw in PREFERRED_LOCATION_KEYWORDS) or
+        any(kw in combined_text for kw in PREFERRED_LOCATION_KEYWORDS)
+    )
+    is_major_metro = any(kw in location for kw in MAJOR_METRO_KEYWORDS)
+    if is_preferred:
+        breakdown["location"] = 2.0
+    elif is_major_metro:
+        breakdown["location"] = 1.5
+    else:
+        breakdown["location"] = 0.8
 
-    # Remote (weight 1.0)
-    remote_hit = job.get("remote") or any(r in location for r in REMOTE_KEYWORDS) or any(r in combined_text for r in REMOTE_KEYWORDS)
-    breakdown["remote"] = 1.0 if remote_hit else 0.0
-
-    # Salary signal (weight 1.0)
+    # 7. Salary signal (weight 1.0)
     salary_max = job.get("salary_max")
     if salary_max and salary_max >= 150000:
         breakdown["salary"] = 1.0
@@ -284,8 +423,24 @@ def score_job(job: dict) -> dict:
     else:
         breakdown["salary"] = 0.0
 
+    # 8. H1B / Visa (weight 2.0) — hardest constraint, cross-verified via h1bdata.info
+    h1b_history = visa.get("h1b_history", {})
+    visa_status = visa.get("visa_status", "")
+    if visa_status == "jd_confirmed" or "tier_1" in visa_status or "tier_2" in visa_status:
+        breakdown["visa_h1b"] = 2.0
+    elif "tier_3" in visa_status:
+        breakdown["visa_h1b"] = 1.2
+    elif visa_status == "h1b_history_strong":
+        breakdown["visa_h1b"] = round(min(2.0, h1b_history.get("score_boost", 0.0) * 2.0), 2)
+    elif visa_status == "h1b_history_weak":
+        breakdown["visa_h1b"] = round(min(0.8, h1b_history.get("score_boost", 0.0) * 2.0), 2)
+    else:
+        # Unknown company, no H1B history — small default so rare gems don't get buried
+        breakdown["visa_h1b"] = 0.2
+
     # ── Normalize to 0–10 ──
-    max_possible = 2.0 + 2.0 + 2.0 + 1.5 + 1.5 + 1.5 + 1.0 + 1.0  # = 12.5
+    # max = 1.0 + 2.0 + 2.0 + 2.0 + 2.0 + 2.0 + 1.0 + 2.0 = 14.0
+    max_possible = 14.0
     raw = sum(breakdown.values())
     score = round((raw / max_possible) * 10, 1)
 
@@ -309,7 +464,7 @@ def score_job(job: dict) -> dict:
         visa_result=visa,
         description=description,
         days_old=days_old,
-        remote=remote_hit,
+        remote=(breakdown["location"] >= 2.0),
         location=location,
     )
 

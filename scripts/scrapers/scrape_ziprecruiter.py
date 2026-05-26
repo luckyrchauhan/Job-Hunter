@@ -1,6 +1,7 @@
 """
 ZipRecruiter Job Scraper
-Method: Apify actor bkwSYfgLsyEazgOvf (URL-based, returns full description + salary)
+Primary:    Apify actor bkwSYfgLsyEazgOvf (URL-based, full description + salary)
+Fallback 1: JobSpy (python-jobspy, free, no key)
 Saves to: data/jobs-raw/ziprecruiter-YYYY-MM-DD.json
 
 Usage:
@@ -150,36 +151,103 @@ def normalize(item: dict, query: str) -> dict:
         "scraped_at": datetime.now().isoformat(),
     }
 
+def scrape_jobspy_zip() -> list:
+    """JobSpy fallback for ZipRecruiter — free, no key."""
+    try:
+        from jobspy import scrape_jobs
+    except ImportError:
+        print("  ⚠ python-jobspy not installed — skipping JobSpy fallback")
+        return []
+
+    def _safe_int(v):
+        try:
+            f = float(v)
+            return int(f) if f == f else None
+        except (TypeError, ValueError):
+            return None
+
+    all_jobs, seen = [], set()
+    for query in SEARCH_QUERIES:
+        try:
+            df = scrape_jobs(
+                site_name=["zip_recruiter"],
+                search_term=query,
+                location="Remote, USA",
+                results_wanted=25,
+                hours_old=336,
+            )
+            if df is None or len(df) == 0:
+                continue
+            for _, row in df.iterrows():
+                r = row.to_dict()
+                title = str(r.get("title") or "")
+                if not is_pm_title(title):
+                    continue
+                uid = str(r.get("id") or f"{r.get('company')}|{title}")
+                if uid in seen:
+                    continue
+                seen.add(uid)
+                sal_min = _safe_int(r.get("min_amount"))
+                sal_max = _safe_int(r.get("max_amount"))
+                loc = str(r.get("location") or "Remote")
+                all_jobs.append({
+                    "id": f"zip-jobspy-{uid}",
+                    "source": "ziprecruiter",
+                    "title": title.strip(),
+                    "company": str(r.get("company") or "").strip(),
+                    "location": loc,
+                    "remote": r.get("is_remote") is True or "remote" in loc.lower(),
+                    "description": str(r.get("description") or ""),
+                    "salary_min": sal_min,
+                    "salary_max": sal_max,
+                    "salary_text": f"${sal_min:,}–${sal_max:,}" if sal_min and sal_max else "",
+                    "posted_date": str(r.get("date_posted") or DATE)[:10],
+                    "apply_url": str(r.get("job_url") or ""),
+                    "scraped_at": datetime.now().isoformat(),
+                })
+        except Exception as e:
+            print(f"  ⚠ JobSpy zip error for '{query}': {e}")
+    return all_jobs
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--max", type=int, default=100)
     args = parser.parse_args()
 
-    if not APIFY_TOKEN:
-        print("✗ APIFY_API_TOKEN not set — skipping ZipRecruiter")
-        return
-
     Path("data/jobs-raw").mkdir(parents=True, exist_ok=True)
-    print("ZipRecruiter scraper — Apify actor")
 
+    # Tier 1: Apify (primary)
     all_jobs, seen_ids = [], set()
-    per_query = max(20, args.max // len(SEARCH_QUERIES))
+    if APIFY_TOKEN:
+        print("ZipRecruiter scraper — Apify actor")
+        per_query = max(20, args.max // len(SEARCH_QUERIES))
+        for query in SEARCH_QUERIES:
+            search_url = f"https://www.ziprecruiter.com/candidate/search?search={query.replace(' ','+')}&location=Remote&days=7"
+            print(f"  '{query}' (max {per_query})")
+            items = apify_run(search_url, per_query)
+            count = 0
+            for item in items:
+                job = normalize(item, query)
+                if not is_pm_title(job["title"]):
+                    continue
+                if job["id"] in seen_ids:
+                    continue
+                seen_ids.add(job["id"])
+                all_jobs.append(job)
+                count += 1
+            print(f"    → {count} PM jobs")
+    else:
+        print("  ⚠ APIFY_API_TOKEN not set — skipping Apify")
 
-    for query in SEARCH_QUERIES:
-        search_url = f"https://www.ziprecruiter.com/candidate/search?search={query.replace(' ','+')}&location=Remote&days=7"
-        print(f"  '{query}' (max {per_query})")
-        items = apify_run(search_url, per_query)
-        count = 0
-        for item in items:
-            job = normalize(item, query)
-            if not is_pm_title(job["title"]):
-                continue
-            if job["id"] in seen_ids:
-                continue
-            seen_ids.add(job["id"])
-            all_jobs.append(job)
-            count += 1
-        print(f"    → {count} PM jobs")
+    # Tier 2: JobSpy fallback
+    if not all_jobs:
+        print("  Apify returned 0 — falling back to JobSpy...")
+        all_jobs = scrape_jobspy_zip()
+        if all_jobs:
+            print(f"  JobSpy recovered {len(all_jobs)} jobs")
+        else:
+            print("  JobSpy also 0 (ZipRecruiter Cloudflare blocks all scrapers)")
 
     OUT_FILE.write_text(json.dumps(all_jobs, indent=2))
     salary_count = sum(1 for j in all_jobs if j.get("salary_text"))

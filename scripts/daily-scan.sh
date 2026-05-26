@@ -74,7 +74,16 @@ run_scraper "Monster"        "scripts/scrapers/scrape_monster.py"
 run_scraper "Niche Boards"   "scripts/scrapers/scrape_niche.py"
 run_scraper "Greenhouse+Lever" "scripts/scrapers/scrape_greenhouse.py"
 run_scraper "ZipRecruiter"   "scripts/scrapers/scrape_ziprecruiter.py"
-run_scraper "Google Jobs"    "scripts/scrapers/scrape_google_jobs.py"
+
+# Google Jobs — SerpAPI fallback limited to 100/mo free tier
+# Only run at 8am scan (hour 8) to conserve: 2 queries/day × 30 days = 60/month
+CURRENT_HOUR=$(date +%H)
+if [ "$CURRENT_HOUR" = "08" ] || [ "$CURRENT_HOUR" = "07" ]; then
+    run_scraper "Google Jobs" "scripts/scrapers/scrape_google_jobs.py"
+else
+    echo "  ⚡ Google Jobs — morning scan only (SerpAPI 100/mo limit). Skipping."
+fi
+
 run_scraper "AI Jobs + Otta" "scripts/scrapers/scrape_aijobs.py"
 
 # Company direct — weekly only (Mondays)
@@ -85,12 +94,8 @@ else
 fi
 
 echo ""
-echo "--- PHASE 1b: ENRICH LINKEDIN (Firecrawl — top 20 jobs) ---"
-if [ -n "$FIRECRAWL_API_KEY" ]; then
-    "$PYTHON" scripts/enrich_linkedin.py --max 20 && echo "  ✓ LinkedIn enriched" || echo "  ✗ LinkedIn enrichment FAILED (continuing)"
-else
-    echo "  ⚡ FIRECRAWL_API_KEY not set — skipping LinkedIn enrichment"
-fi
+echo "--- PHASE 1b: ENRICH LINKEDIN (Firecrawl — disabled: LinkedIn blocks Firecrawl) ---"
+echo "  ⚡ LinkedIn Firecrawl enrichment skipped — 0% success rate, saves 20 credits/scan"
 
 echo ""
 echo "--- PHASE 2: SCORE & FILTER ---"

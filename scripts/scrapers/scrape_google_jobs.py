@@ -1,6 +1,7 @@
 """
 Google Jobs Scraper
-Method: Apify actor CkLDY9GAQf6QlP6GP (25k+ runs, most reliable Google Jobs actor)
+Primary:    Apify actor CkLDY9GAQf6QlP6GP (25k+ runs, full JD + salary)
+Fallback 1: SerpAPI Google Jobs endpoint (100 free searches/month, SERPAPI_API_KEY in .env)
 Returns: full job description, salary, company, location from Google Jobs aggregator
 Saves to: data/jobs-raw/google_jobs-YYYY-MM-DD.json
 
@@ -11,18 +12,20 @@ Usage:
   python scripts/scrapers/scrape_google_jobs.py --max 100
 """
 import os, json, time, re, argparse
+import urllib.request, urllib.parse
 from datetime import datetime
 from pathlib import Path
 from dotenv import load_dotenv
-import urllib.request
 
 load_dotenv()
 
 DATE = datetime.now().strftime("%Y-%m-%d")
 OUT_FILE = Path(f"data/jobs-raw/google_jobs-{DATE}.json")
 APIFY_TOKEN = os.environ.get("APIFY_API_TOKEN", "")
+SERPAPI_KEY = os.environ.get("SERPAPI_API_KEY", "")
 ACTOR_ID = "CkLDY9GAQf6QlP6GP"  # Google Jobs Scraper (25k+ runs)
 
+# Apify uses all queries (no cost limit beyond monthly compute)
 SEARCH_QUERIES = [
     "product manager remote USA",
     "senior product manager remote",
@@ -30,6 +33,14 @@ SEARCH_QUERIES = [
     "platform product manager remote",
     "technical product manager USA",
 ]
+
+# SerpAPI uses only these 2 — conserves free tier (100/mo limit)
+# 2 queries × 1 run/day × 30 days = 60/month (40 buffer)
+SERPAPI_QUERIES = [
+    "product manager remote USA",   # broadest, highest yield
+    "AI product manager",           # your differentiator
+]
+SERPAPI_MAX_PER_QUERY = 10  # 2 queries × 10 = 20 results/day max
 
 PM_TITLES = [
     "product manager", "senior product manager", "sr. product manager",
@@ -187,37 +198,128 @@ def normalize(item: dict, query: str) -> dict:
         "scraped_at": datetime.now().isoformat(),
     }
 
+def scrape_serpapi(max_per_query: int = 20) -> list:
+    """
+    SerpAPI fallback — Google Jobs endpoint.
+    Free tier: 100 searches/month. No credit card needed for free plan.
+    Sign up: https://serpapi.com/
+    Set SERPAPI_API_KEY in .env
+    """
+    if not SERPAPI_KEY:
+        print("  ⚠ SERPAPI_API_KEY not set — skipping SerpAPI fallback")
+        print("     Get free key (100/mo): https://serpapi.com/")
+        return []
+
+    all_jobs, seen = [], set()
+
+    for query in SERPAPI_QUERIES:
+        print(f"  SerpAPI: '{query}' (max {SERPAPI_MAX_PER_QUERY})")
+        try:
+            params = urllib.parse.urlencode({
+                "engine": "google_jobs",
+                "q": query,
+                "api_key": SERPAPI_KEY,
+                "chips": "date_posted:week",
+                "ltype": "1",   # remote
+                "num": SERPAPI_MAX_PER_QUERY,
+            })
+            url = f"https://serpapi.com/search?{params}"
+            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=15) as r:
+                data = json.loads(r.read())
+
+            results = data.get("jobs_results", [])
+            count = 0
+            for item in results:
+                title = item.get("title", "") or ""
+                if not is_pm_title(title):
+                    continue
+                company = item.get("company_name", "") or ""
+                location = item.get("location", "") or ""
+                description = item.get("description", "") or ""
+                url_val = item.get("share_link", "") or ""
+                uid = f"serpapi-{hash(url_val or title + company) % 10**10}"
+                if uid in seen:
+                    continue
+                seen.add(uid)
+
+                # Extract salary from extensions
+                extensions = item.get("extensions", []) or []
+                salary_text = next((e for e in extensions if "$" in e or "salary" in e.lower()), "")
+
+                # Parse posted date from detected_extensions
+                detected = item.get("detected_extensions", {}) or {}
+                posted = DATE
+                if detected.get("posted_at"):
+                    posted = detected["posted_at"]
+
+                all_jobs.append({
+                    "id": uid,
+                    "source": "google_jobs",
+                    "title": title.strip(),
+                    "company": company.strip(),
+                    "location": location.strip(),
+                    "remote": "remote" in location.lower() or detected.get("work_from_home", False),
+                    "description": description,
+                    "salary_text": salary_text,
+                    "salary_min": None,
+                    "salary_max": None,
+                    "posted_date": posted[:10],
+                    "apply_url": url_val,
+                    "via": item.get("via", ""),
+                    "source_method": "serpapi",
+                    "scraped_at": datetime.now().isoformat(),
+                })
+                count += 1
+
+            print(f"    → {count} PM jobs")
+            time.sleep(1)  # SerpAPI rate limit courtesy
+
+        except Exception as e:
+            print(f"    SerpAPI error: {e}")
+
+    return all_jobs
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--max", type=int, default=100)
     args = parser.parse_args()
 
-    if not APIFY_TOKEN:
-        print("✗ APIFY_API_TOKEN not set — skipping Google Jobs")
-        return
-
     Path("data/jobs-raw").mkdir(parents=True, exist_ok=True)
-    print("Google Jobs scraper — Apify actor (aggregates LinkedIn/Indeed/Glassdoor/company sites)")
 
+    # Tier 1: Apify (primary — full JD + salary)
     all_jobs, seen_ids = [], set()
-    per_query = max(20, args.max // len(SEARCH_QUERIES))
+    if APIFY_TOKEN:
+        print("Google Jobs scraper — Apify actor (aggregates LinkedIn/Indeed/Glassdoor/company sites)")
+        per_query = max(20, args.max // len(SEARCH_QUERIES))
+        for query in SEARCH_QUERIES:
+            print(f"  '{query}' (max {per_query})")
+            items = apify_run(query, per_query)
+            count = 0
+            for item in items:
+                job = normalize(item, query)
+                if not job:
+                    continue
+                if not is_pm_title(job["title"]):
+                    continue
+                if job["id"] in seen_ids:
+                    continue
+                seen_ids.add(job["id"])
+                all_jobs.append(job)
+                count += 1
+            print(f"    → {count} PM jobs")
+    else:
+        print("  ⚠ APIFY_API_TOKEN not set — skipping Apify")
 
-    for query in SEARCH_QUERIES:
-        print(f"  '{query}' (max {per_query})")
-        items = apify_run(query, per_query)
-        count = 0
-        for item in items:
-            job = normalize(item, query)
-            if not job:
-                continue
-            if not is_pm_title(job["title"]):
-                continue
-            if job["id"] in seen_ids:
-                continue
-            seen_ids.add(job["id"])
-            all_jobs.append(job)
-            count += 1
-        print(f"    → {count} PM jobs")
+    # Tier 2: SerpAPI fallback
+    if not all_jobs:
+        print("  Apify returned 0 — falling back to SerpAPI...")
+        all_jobs = scrape_serpapi(max_per_query=20)
+        if all_jobs:
+            print(f"  SerpAPI recovered {len(all_jobs)} jobs")
+        elif not SERPAPI_KEY:
+            print("  ⚠ Set SERPAPI_API_KEY in .env for Google Jobs fallback (free 100/mo)")
 
     OUT_FILE.write_text(json.dumps(all_jobs, indent=2))
     salary_count = sum(1 for j in all_jobs if j.get("salary_text"))

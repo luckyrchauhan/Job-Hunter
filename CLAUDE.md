@@ -56,30 +56,52 @@ See `config/score-weights.json` for full weights.
 
 ### Method per source (DO NOT change without testing)
 
-| Source | Method | Reason |
-|--------|--------|--------|
-| LinkedIn | Playwright only | Apify actors don't scrape LinkedIn search results reliably |
-| Indeed | Apify `MXLpngmVpE8WTESQr` | Full JD + salary, 600k runs |
-| Glassdoor | Apify `vKjDv4zCNPfku2byp` | Full JD + salary |
-| Wellfound | Apify actor | Full JD + salary |
-| ZipRecruiter | Apify `bkwSYfgLsyEazgOvf` | URL-based input, full JD + salary, 900+ runs |
-| Google Jobs | Apify `CkLDY9GAQf6QlP6GP` | 25k+ runs, aggregates all boards, full JD |
-| Himalayas | Public JSON API | Free, full JD, no auth needed |
-| Hiring Cafe | Public API | Free, full JD |
-| Greenhouse | Free public API `boards-api.greenhouse.io` | No key, full JD, 50+ companies |
-| Lever | Free public API `api.lever.co` | No key, full JD |
-| Dice | Playwright | Public search, full JD |
-| RemoteOK | Public JSON API | Free, no auth |
-| YC Jobs | Public JSON API | Free, no auth |
-| Builtin | Public API | Free |
-| Monster | Broken — 403 | Skip until fixed |
-| Firecrawl | LinkedIn enrichment ONLY for top 20 jobs | LinkedIn.com blocks Firecrawl on enterprise pages |
+| Source | Primary | Fallback 1 | Fallback 2 | Cost tier |
+|--------|---------|------------|------------|-----------|
+| LinkedIn | Playwright | — | — | Free |
+| Indeed | Apify `MXLpngmVpE8WTESQr` | JobSpy (python-jobspy) | Playwright | Apify paid → JobSpy free |
+| Glassdoor | Apify `vKjDv4zCNPfku2byp` | JobSpy | — | Apify paid → JobSpy free (Cloudflare blocks both when Apify down) |
+| Wellfound | Apify actor | Playwright | — | Apify paid |
+| ZipRecruiter | Apify `bkwSYfgLsyEazgOvf` | JobSpy | — | Apify paid → JobSpy free (Cloudflare blocks both when Apify down) |
+| Google Jobs | Apify `CkLDY9GAQf6QlP6GP` | SerpAPI | — | Apify paid → SerpAPI **100/mo limit** |
+| Himalayas | Public JSON API | — | — | Free unlimited |
+| Hiring Cafe | Public API | — | — | Free unlimited |
+| Greenhouse | Free public API `boards-api.greenhouse.io` | — | — | Free unlimited |
+| Lever | Free public API `api.lever.co` | — | — | Free unlimited |
+| Dice | Playwright | — | — | Free unlimited |
+| RemoteOK | Public JSON API | — | — | Free unlimited |
+| YC Jobs | Public JSON API | — | — | Free unlimited |
+| Builtin | Public API | Playwright | — | Free unlimited |
+| Monster | Broken — 403 | — | — | Skip until fixed |
+| Firecrawl | **DISABLED** — LinkedIn blocks it | — | — | Do NOT use for LinkedIn |
 
 ### Hard rules
 - NEVER use Apify for LinkedIn
 - NEVER run Apify scrapers in parallel — free tier hits concurrent limit; run sequentially in daily-scan.sh
-- NEVER use Firecrawl for LinkedIn job pages — blocked at infrastructure level
-- Apify free tier = ~$5/month compute units; monitor usage at apify.com/billing
+- NEVER use Firecrawl for LinkedIn job pages — blocked at infrastructure level; 0% success rate
+- NEVER run Google Jobs SerpAPI more than once/day — 100 searches/month limit, 2 queries/day = 60/month
+- NEVER add new SerpAPI queries without checking monthly budget first
+- Apify free tier = ~$5/month compute units; monitor at apify.com/billing; resets monthly
+- When Apify limit hit → scrapers auto-fallback (no manual action needed)
+
+### API budgets (monthly free tier)
+
+| API | Limit | Current usage | Rule |
+|-----|-------|--------------|------|
+| Apify | ~$5 compute | Resets monthly | Primary for Indeed/Glassdoor/ZipRecruiter/GoogleJobs |
+| SerpAPI | 100 searches | 2 queries × 1/day × 30 = **60** | Google Jobs morning scan only (8am), 2 queries max |
+| Firecrawl | 500 credits | **0** (disabled) | Reserved — do NOT use for LinkedIn; only redirect to Greenhouse/Lever enrichment if needed |
+| JobSpy | Unlimited | As needed | Auto-fallback for Indeed/Glassdoor/ZipRecruiter when Apify down |
+
+### Fallback chain (auto, no manual action)
+```
+Apify (primary)
+  └─ 403 / limit hit
+       ├─ Indeed      → JobSpy → Playwright
+       ├─ Glassdoor   → JobSpy (may also 403 — Cloudflare)
+       ├─ ZipRecruiter → JobSpy (may also 403 — Cloudflare)
+       └─ Google Jobs  → SerpAPI (morning scan only, 2 queries)
+```
 
 ## Cron Schedule
 
