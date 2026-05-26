@@ -189,23 +189,68 @@ def sync_scored_jobs_tab(spreadsheet):
     except Exception:
         ws = spreadsheet.add_worksheet(title="Scored Jobs", rows=1000, cols=10)
 
-    COLS = ["Score", "Company", "Role", "Urgency", "Visa", "Salary", "Posted", "Source", "Apply URL", "Status"]
+    # Sort by priority_score desc, fallback to fit score
+    jobs_sorted = sorted(
+        jobs_sorted,
+        key=lambda x: (-(x.get("priority_score") or 0), -(x.get("score") or 0))
+    )
+
+    COLS = [
+        "Priority Score",   # A — cumulative apply rank (0–10)
+        "Priority Band",    # B — 🔥/⚡/👀/📋
+        "Fit Score",        # C — original fit score
+        "Company",          # D
+        "Role",             # E
+        "H1B Sponsor",      # F — explicit/likely/unknown/no
+        "Salary",           # G
+        "Urgency",          # H
+        "Posted",           # I
+        "Location",         # J
+        "Remote",           # K
+        "Source",           # L
+        "Apply URL",        # M
+        "Status",           # N
+        "Connections to Reach Out",  # O — filled when CSV loaded
+        "Connection Email",          # P — filled when CSV loaded
+        "Outreach Message",          # Q — filled when CSV loaded
+    ]
     rows = [COLS]
     for j in jobs_sorted:
+        visa_raw = j.get("visa_status_raw", "")
+        if any(p in (j.get("description") or "").lower() for p in [
+            "h1b sponsor", "h-1b sponsor", "will sponsor h1b", "h1b transfer",
+            "visa sponsorship provided", "sponsoring h1b", "h1b visa sponsor",
+        ]):
+            h1b_display = "✅ Confirmed in JD"
+        elif visa_raw in ["tier_1_heavy_sponsors", "tier_2_consistent_sponsors"]:
+            h1b_display = "🟡 Likely (known sponsor)"
+        elif visa_raw == "no_sponsorship":
+            h1b_display = "❌ No Sponsorship"
+        else:
+            h1b_display = "❓ Unknown"
+
         rows.append([
+            j.get("priority_score", ""),
+            j.get("priority_band", ""),
             j.get("score", ""),
             j.get("company", ""),
             j.get("title", j.get("role", "")),
-            j.get("urgency", ""),
-            j.get("visa", ""),
+            h1b_display,
             j.get("salary_text", ""),
-            j.get("posted_at", ""),
+            j.get("urgency_label", j.get("urgency", "")),
+            j.get("posted_at", j.get("posted_date", "")),
+            j.get("location", ""),
+            "✅ Remote" if j.get("remote") else "🏢 On-site",
             j.get("source", ""),
             j.get("apply_url", j.get("url", "")),
             j.get("status", "new"),
+            j.get("connections_to_reach_out", ""),   # populated after CSV loaded
+            j.get("connection_email", ""),            # populated after CSV loaded
+            j.get("outreach_message", ""),            # populated after CSV loaded
         ])
 
-    ws.update(rows, f"A1:J{len(rows)}")
+    col_letter = "Q"
+    ws.update(rows, f"A1:{col_letter}{len(rows)}")
     print(f"  ✓ Scored Jobs tab — {len(rows)-1} jobs written")
 
 
@@ -214,37 +259,61 @@ def upsert_job_row(spreadsheet, job: dict):
     Add or update a single scored job row in the 'Scored Jobs' tab.
     Called by watcher.py for instant-alert jobs.
     """
-    SCORED_COLS = ["ID", "Company", "Role", "Score", "Urgency", "Visa",
-                   "Salary", "Posted", "Applicants", "Apply URL", "Alerted At"]
+    SCORED_COLS = [
+        "Priority Score", "Priority Band", "Fit Score", "Company", "Role",
+        "H1B Sponsor", "Salary", "Urgency", "Posted", "Location", "Remote",
+        "Source", "Apply URL", "Status",
+        "Connections to Reach Out", "Connection Email", "Outreach Message",
+    ]
 
     try:
         ws = spreadsheet.worksheet("Scored Jobs")
     except Exception:
         ws = spreadsheet.add_worksheet(title="Scored Jobs", rows=1000, cols=len(SCORED_COLS))
-        ws.update("A1:K1", [SCORED_COLS])
+        ws.update("A1:Q1", [SCORED_COLS])
 
-    job_id = job.get("id", "")
-    # Find existing row by ID (col A) — avoid duplicates
-    col_a = ws.col_values(1)
-    if job_id in col_a:
-        row_num = col_a.index(job_id) + 1
+    # Match on Apply URL (col M = index 12) to avoid duplicates
+    apply_url = job.get("apply_url", job.get("url", ""))
+    try:
+        col_m = ws.col_values(13)
+        if apply_url and apply_url in col_m:
+            row_num = col_m.index(apply_url) + 1
+        else:
+            row_num = max(len(ws.col_values(1)) + 1, 2)
+    except Exception:
+        row_num = 2
+
+    visa_raw = job.get("visa_status_raw", "")
+    desc_lower = (job.get("description") or "").lower()
+    if any(p in desc_lower for p in ["h1b sponsor", "h-1b sponsor", "will sponsor h1b"]):
+        h1b_display = "✅ Confirmed in JD"
+    elif visa_raw in ["tier_1_heavy_sponsors", "tier_2_consistent_sponsors"]:
+        h1b_display = "🟡 Likely (known sponsor)"
+    elif visa_raw == "no_sponsorship":
+        h1b_display = "❌ No Sponsorship"
     else:
-        row_num = len(col_a) + 1
+        h1b_display = "❓ Unknown"
 
     row = [
-        job_id,
+        job.get("priority_score", ""),
+        job.get("priority_band", ""),
+        job.get("score", ""),
         job.get("company", ""),
         job.get("title", ""),
-        job.get("score", ""),
-        job.get("urgency", ""),
-        job.get("visa", ""),
+        h1b_display,
         job.get("salary_text", ""),
+        job.get("urgency_label", job.get("urgency", "")),
         job.get("posted_at", ""),
-        job.get("applicant_count", ""),
-        job.get("apply_url", ""),
-        datetime.now().strftime("%Y-%m-%d %H:%M"),
+        job.get("location", ""),
+        "✅ Remote" if job.get("remote") else "🏢 On-site",
+        job.get("source", ""),
+        apply_url,
+        job.get("status", "new"),
+        job.get("connections_to_reach_out", ""),
+        job.get("connection_email", ""),
+        job.get("outreach_message", ""),
     ]
-    ws.update(f"A{row_num}:K{row_num}", [row])
+    ws.update(f"A{row_num}:Q{row_num}", [row])
     print(f"  ✓ Scored Jobs tab — row {row_num} upserted ({job.get('company')} — {job.get('title','')})")
 
 

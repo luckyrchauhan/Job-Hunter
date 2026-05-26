@@ -301,6 +301,18 @@ def score_job(job: dict) -> dict:
     # ── Urgency ──
     urgency = compute_urgency(score, days_old, description)
 
+    # ── Priority Score (cumulative apply rank, normalized 0–10) ──
+    priority = compute_priority_score(
+        fit_score=score,
+        salary_min=salary_min,
+        salary_max=salary_max,
+        visa_result=visa,
+        description=description,
+        days_old=days_old,
+        remote=remote_hit,
+        location=location,
+    )
+
     return {
         **job,
         **visa,
@@ -313,6 +325,117 @@ def score_job(job: dict) -> dict:
         "low_confidence": low_confidence,
         "company_unknown": not company,
         **urgency,
+        **priority,
+    }
+
+
+# ─── Priority Score ──────────────────────────────────────────────────────────
+
+H1B_EXPLICIT_PHRASES = [
+    "h1b sponsor", "h-1b sponsor", "will sponsor h1b", "h1b transfer",
+    "visa sponsorship provided", "sponsoring h1b", "h1b visa sponsor",
+    "sponsor h-1b", "h1b welcome",
+]
+
+PREVIOUS_COMPANIES = [
+    "accenture", "tata", "infosys", "wipro", "cognizant", "hcl",
+    # add more from your resume as needed
+]
+
+def compute_priority_score(
+    fit_score: float,
+    salary_min,
+    salary_max,
+    visa_result: dict,
+    description: str,
+    days_old: int,
+    remote: bool,
+    location: str,
+) -> dict:
+    """
+    Cumulative apply-priority score normalized to 0–10.
+    Weights (raw max = 22):
+      fit_score (0–10)           → up to 10 pts (mapped directly)
+      H1B explicitly in JD       → +4 pts  (highest single bonus)
+      H1B likely (tier 1/2)      → +1 pt
+      Salary ≥ $150k             → +2 pts
+      Salary $120–150k           → +1 pt
+      Posted < 2hrs              → +2 pts
+      Posted < 24hrs             → +1 pt
+      Remote                     → +1 pt
+      Boston / Indiana location  → +0.5 pt
+    Connections bonuses added later when CSV loaded:
+      Indian-origin in USA       → +3 pts
+      BU alum / prev company     → +2 pts
+      Any connection             → +1 pt
+    """
+    desc_lower = (description or "").lower()
+    raw = fit_score  # base: fit score already 0–10
+
+    # H1B — highest weight
+    h1b_explicit = any(p in desc_lower for p in H1B_EXPLICIT_PHRASES)
+    if h1b_explicit:
+        raw += 4
+        h1b_bonus = "explicit_+4"
+    elif visa_result.get("visa_status_raw") in ["tier_1_heavy_sponsors", "tier_2_consistent_sponsors"]:
+        raw += 1
+        h1b_bonus = "likely_+1"
+    else:
+        h1b_bonus = "none"
+
+    # Salary
+    salary_bonus = 0
+    if salary_max and salary_max >= 150000:
+        salary_bonus = 2
+    elif salary_min and salary_min >= 120000:
+        salary_bonus = 1
+    raw += salary_bonus
+
+    # Recency
+    recency_bonus = 0
+    hours_old = days_old * 24
+    if hours_old < 2:
+        recency_bonus = 2
+    elif hours_old < 24:
+        recency_bonus = 1
+    raw += recency_bonus
+
+    # Remote
+    remote_bonus = 1 if remote else 0
+    raw += remote_bonus
+
+    # Location
+    location_bonus = 0
+    if any(loc in location for loc in ["boston", "indiana", "indianapolis", "remote"]):
+        location_bonus = 0.5
+    raw += location_bonus
+
+    # Normalize: max without connections = 10+4+2+2+1+0.5 = 19.5
+    # Reserve headroom for connections (+3 max) → max_possible = 22.5
+    MAX_POSSIBLE = 22.5
+    priority = round(min((raw / MAX_POSSIBLE) * 10, 10.0), 1)
+
+    if priority >= 8.0:
+        priority_band = "🔥 Apply Now"
+    elif priority >= 6.0:
+        priority_band = "⚡ Apply Soon"
+    elif priority >= 4.0:
+        priority_band = "👀 Consider"
+    else:
+        priority_band = "📋 Low Priority"
+
+    return {
+        "priority_score": priority,
+        "priority_band": priority_band,
+        "priority_breakdown": {
+            "fit_score": fit_score,
+            "h1b_bonus": h1b_bonus,
+            "salary_bonus": salary_bonus,
+            "recency_bonus": recency_bonus,
+            "remote_bonus": remote_bonus,
+            "location_bonus": location_bonus,
+            "connection_bonus": 0,  # filled when connections CSV loaded
+        },
     }
 
 
