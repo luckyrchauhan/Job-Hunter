@@ -43,3 +43,5 @@ logs/
 node_modules/
 *.json filter=secret
 job-hunter-*.json
+data/connections.csv
+data/linkedin-connections*
