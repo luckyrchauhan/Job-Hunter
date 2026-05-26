@@ -97,6 +97,14 @@ echo "--- PHASE 2: SCORE & FILTER ---"
 "$PYTHON" scripts/score_jobs.py && echo "  ✓ Scoring complete" || echo "  ✗ Scoring FAILED"
 
 echo ""
+echo "--- PHASE 2b: MATCH CONNECTIONS ---"
+if [ -f "$PROJECT_DIR/data/connections.csv" ]; then
+    "$PYTHON" scripts/match_connections.py && echo "  ✓ Connections matched" || echo "  ✗ Connection match FAILED (continuing)"
+else
+    echo "  ⚡ data/connections.csv not found — skipping connection matching"
+fi
+
+echo ""
 echo "--- PHASE 3: NOTIFY (Slack alerts) ---"
 "$PYTHON" scripts/notify_slack.py && echo "  ✓ Alerts sent" || echo "  ✗ Slack alerts FAILED"
 
