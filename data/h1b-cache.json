@@ -3635,5 +3635,406 @@
     "note": "Consistent H1B sponsor: 13 petitions",
     "cached_at": 1779817789.127349,
     "source": "h1bdata.info"
+  },
+  "pyramid consulting,": {
+    "count": 0,
+    "years_active": [],
+    "score_boost": 0.0,
+    "note": "No H1B history found \u2014 manual verify",
+    "cached_at": 1779887935.874917,
+    "source": "h1bdata.info"
+  },
+  "grtoration": {
+    "count": 5,
+    "years_active": [
+      "2020",
+      "2021",
+      "2023"
+    ],
+    "score_boost": 0.4,
+    "note": "Occasional H1B sponsor: 5 petitions",
+    "cached_at": 1779887936.575347,
+    "source": "h1bdata.info"
+  },
+  "cynet systems": {
+    "count": 2,
+    "years_active": [
+      "2025"
+    ],
+    "score_boost": 0.2,
+    "note": "Rare H1B sponsor: 2 petition(s)",
+    "cached_at": 1779887937.307561,
+    "source": "h1bdata.info"
+  },
+  "toyota motor north america": {
+    "count": 16,
+    "years_active": [
+      "2025",
+      "2026"
+    ],
+    "score_boost": 0.7,
+    "note": "Consistent H1B sponsor: 16 petitions",
+    "cached_at": 1779887938.063139,
+    "source": "h1bdata.info"
+  },
+  "stellar professionals": {
+    "count": 0,
+    "years_active": [],
+    "score_boost": 0.0,
+    "note": "No H1B history found \u2014 manual verify",
+    "cached_at": 1779887938.826873,
+    "source": "h1bdata.info"
+  },
+  "hire it people": {
+    "count": 3,
+    "years_active": [
+      "2019",
+      "2020"
+    ],
+    "score_boost": 0.4,
+    "note": "Occasional H1B sponsor: 3 petitions",
+    "cached_at": 1779887939.511334,
+    "source": "h1bdata.info"
+  },
+  "della infotech": {
+    "count": 6,
+    "years_active": [
+      "2019",
+      "2020",
+      "2021"
+    ],
+    "score_boost": 0.4,
+    "note": "Occasional H1B sponsor: 6 petitions",
+    "cached_at": 1779887940.250767,
+    "source": "h1bdata.info"
+  },
+  "gartner": {
+    "count": 50,
+    "years_active": [
+      "2025",
+      "2026"
+    ],
+    "score_boost": 1.0,
+    "note": "Heavy H1B sponsor: 50 petitions, 2 years",
+    "cached_at": 1779887941.179277,
+    "source": "h1bdata.info"
+  },
+  "motion recruitment partners,": {
+    "count": 0,
+    "years_active": [],
+    "score_boost": 0.0,
+    "note": "No H1B history found \u2014 manual verify",
+    "cached_at": 1779887941.920923,
+    "source": "h1bdata.info"
+  },
+  "mitchell martin,": {
+    "count": 0,
+    "score_boost": 0.0,
+    "note": "H1B lookup failed: HTTP Error 429: Too Many Requests",
+    "cached_at": 1779887942.4580832
+  },
+  "robinhood": {
+    "count": 172,
+    "years_active": [
+      "2025",
+      "2026"
+    ],
+    "score_boost": 1.0,
+    "note": "Heavy H1B sponsor: 172 petitions, 2 years",
+    "cached_at": 1779887943.787633,
+    "source": "h1bdata.info"
+  },
+  "singular": {
+    "count": 50,
+    "years_active": [
+      "2025"
+    ],
+    "score_boost": 1.0,
+    "note": "Heavy H1B sponsor: 50 petitions, 1 years",
+    "cached_at": 1779887944.621805,
+    "source": "h1bdata.info"
+  },
+  "midea": {
+    "count": 5,
+    "years_active": [
+      "2021"
+    ],
+    "score_boost": 0.4,
+    "note": "Occasional H1B sponsor: 5 petitions",
+    "cached_at": 1779887945.4005928,
+    "source": "h1bdata.info"
+  },
+  "akamai": {
+    "count": 1439,
+    "years_active": [
+      "2019",
+      "2020",
+      "2021",
+      "2022",
+      "2023",
+      "2024",
+      "2025",
+      "2026"
+    ],
+    "score_boost": 1.0,
+    "note": "Heavy H1B sponsor: 1439 petitions, 8 years",
+    "cached_at": 1779887947.5755699,
+    "source": "h1bdata.info"
+  },
+  "rb global": {
+    "count": 0,
+    "years_active": [],
+    "score_boost": 0.0,
+    "note": "No H1B history found \u2014 manual verify",
+    "cached_at": 1779887948.260499,
+    "source": "h1bdata.info"
+  },
+  "kiddeglobal": {
+    "count": 0,
+    "years_active": [],
+    "score_boost": 0.0,
+    "note": "No H1B history found \u2014 manual verify",
+    "cached_at": 1779887948.9804711,
+    "source": "h1bdata.info"
+  },
+  "thermofisher": {
+    "count": 0,
+    "years_active": [],
+    "score_boost": 0.0,
+    "note": "No H1B history found \u2014 manual verify",
+    "cached_at": 1779887949.680421,
+    "source": "h1bdata.info"
+  },
+  "thermo fisher scientific": {
+    "count": 250,
+    "years_active": [
+      "2025",
+      "2026"
+    ],
+    "score_boost": 1.0,
+    "note": "Heavy H1B sponsor: 250 petitions, 2 years",
+    "cached_at": 1779887951.016534,
+    "source": "h1bdata.info"
+  },
+  "leadfeeder": {
+    "count": 0,
+    "years_active": [],
+    "score_boost": 0.0,
+    "note": "No H1B history found \u2014 manual verify",
+    "cached_at": 1779887951.7335098,
+    "source": "h1bdata.info"
+  },
+  "atlas obscura": {
+    "count": 0,
+    "years_active": [],
+    "score_boost": 0.0,
+    "note": "No H1B history found \u2014 manual verify",
+    "cached_at": 1779887952.4678888,
+    "source": "h1bdata.info"
+  },
+  "oscar health": {
+    "count": 0,
+    "years_active": [],
+    "score_boost": 0.0,
+    "note": "No H1B history found \u2014 manual verify",
+    "cached_at": 1779887953.160317,
+    "source": "h1bdata.info"
+  },
+  "mtv coaching": {
+    "count": 0,
+    "years_active": [],
+    "score_boost": 0.0,
+    "note": "No H1B history found \u2014 manual verify",
+    "cached_at": 1779887953.862396,
+    "source": "h1bdata.info"
+  },
+  "insuletoration": {
+    "count": 229,
+    "years_active": [
+      "2019",
+      "2020",
+      "2021",
+      "2022",
+      "2023",
+      "2024",
+      "2025",
+      "2026"
+    ],
+    "score_boost": 1.0,
+    "note": "Heavy H1B sponsor: 229 petitions, 8 years",
+    "cached_at": 1779887955.0822499,
+    "source": "h1bdata.info"
+  },
+  "auxilius": {
+    "count": 0,
+    "years_active": [],
+    "score_boost": 0.0,
+    "note": "No H1B history found \u2014 manual verify",
+    "cached_at": 1779887955.780361,
+    "source": "h1bdata.info"
+  },
+  "hirecapital": {
+    "count": 0,
+    "years_active": [],
+    "score_boost": 0.0,
+    "note": "No H1B history found \u2014 manual verify",
+    "cached_at": 1779887956.544011,
+    "source": "h1bdata.info"
+  },
+  "napster": {
+    "count": 0,
+    "years_active": [],
+    "score_boost": 0.0,
+    "note": "No H1B history found \u2014 manual verify",
+    "cached_at": 1779887957.2250712,
+    "source": "h1bdata.info"
+  },
+  "limbic": {
+    "count": 0,
+    "years_active": [],
+    "score_boost": 0.0,
+    "note": "No H1B history found \u2014 manual verify",
+    "cached_at": 1779887957.994666,
+    "source": "h1bdata.info"
+  },
+  "gemnote": {
+    "count": 0,
+    "years_active": [],
+    "score_boost": 0.0,
+    "note": "No H1B history found \u2014 manual verify",
+    "cached_at": 1779887958.682084,
+    "source": "h1bdata.info"
+  },
+  "atticus": {
+    "count": 2,
+    "years_active": [
+      "2023",
+      "2024"
+    ],
+    "score_boost": 0.2,
+    "note": "Rare H1B sponsor: 2 petition(s)",
+    "cached_at": 1779887959.470614,
+    "source": "h1bdata.info"
+  },
+  "the midtown group": {
+    "count": 0,
+    "years_active": [],
+    "score_boost": 0.0,
+    "note": "No H1B history found \u2014 manual verify",
+    "cached_at": 1779887960.151459,
+    "source": "h1bdata.info"
+  },
+  "the partner group": {
+    "count": 0,
+    "years_active": [],
+    "score_boost": 0.0,
+    "note": "No H1B history found \u2014 manual verify",
+    "cached_at": 1779887960.869015,
+    "source": "h1bdata.info"
+  },
+  "req": {
+    "count": 0,
+    "years_active": [],
+    "score_boost": 0.0,
+    "note": "No H1B history found \u2014 manual verify",
+    "cached_at": 1779887961.569304,
+    "source": "h1bdata.info"
+  },
+  "open systems": {
+    "count": 77,
+    "years_active": [
+      "2019",
+      "2020",
+      "2021",
+      "2022",
+      "2023",
+      "2024",
+      "2025"
+    ],
+    "score_boost": 1.0,
+    "note": "Heavy H1B sponsor: 77 petitions, 7 years",
+    "cached_at": 1779887962.5203168,
+    "source": "h1bdata.info"
+  },
+  "classpass": {
+    "count": 10,
+    "years_active": [
+      "2020",
+      "2021",
+      "2022"
+    ],
+    "score_boost": 0.7,
+    "note": "Consistent H1B sponsor: 10 petitions",
+    "cached_at": 1779887963.225416,
+    "source": "h1bdata.info"
+  },
+  "flairx": {
+    "count": 0,
+    "years_active": [],
+    "score_boost": 0.0,
+    "note": "No H1B history found \u2014 manual verify",
+    "cached_at": 1779887963.9000819,
+    "source": "h1bdata.info"
+  },
+  "8x8": {
+    "count": 0,
+    "years_active": [],
+    "score_boost": 0.0,
+    "note": "No H1B history found \u2014 manual verify",
+    "cached_at": 1779887964.24432,
+    "source": "h1bdata.info"
+  },
+  "itd": {
+    "count": 0,
+    "years_active": [],
+    "score_boost": 0.0,
+    "note": "No H1B history found \u2014 manual verify",
+    "cached_at": 1779887964.8789718,
+    "source": "h1bdata.info"
+  },
+  "quantum world": {
+    "count": 0,
+    "years_active": [],
+    "score_boost": 0.0,
+    "note": "No H1B history found \u2014 manual verify",
+    "cached_at": 1779887965.551094,
+    "source": "h1bdata.info"
+  },
+  "happyfolks": {
+    "count": 0,
+    "years_active": [],
+    "score_boost": 0.0,
+    "note": "No H1B history found \u2014 manual verify",
+    "cached_at": 1779887966.382036,
+    "source": "h1bdata.info"
+  },
+  "teaching strategies": {
+    "count": 2,
+    "years_active": [
+      "2024"
+    ],
+    "score_boost": 0.2,
+    "note": "Rare H1B sponsor: 2 petition(s)",
+    "cached_at": 1779887967.2241092,
+    "source": "h1bdata.info"
+  },
+  "robert half": {
+    "count": 19,
+    "years_active": [
+      "2025",
+      "2026"
+    ],
+    "score_boost": 0.7,
+    "note": "Consistent H1B sponsor: 19 petitions",
+    "cached_at": 1779887968.0411892,
+    "source": "h1bdata.info"
+  },
+  "rbc": {
+    "count": 0,
+    "years_active": [],
+    "score_boost": 0.0,
+    "note": "No H1B history found \u2014 manual verify",
+    "cached_at": 1779887968.680792,
+    "source": "h1bdata.info"
   }
 }

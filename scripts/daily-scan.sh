@@ -93,6 +93,13 @@ else
     echo "  ⚡ Company Direct — runs Mondays only (skipping)"
 fi
 
+# Fortune 500 — weekly only (Saturdays, day 6)
+if [ "$(date +%u)" = "6" ]; then
+    run_scraper "Fortune 500 Career Pages" "scripts/scrapers/scrape_fortune500.py"
+else
+    echo "  ⚡ Fortune 500 — runs Saturdays only (skipping)"
+fi
+
 echo ""
 echo "--- PHASE 1b: ENRICH LINKEDIN (Firecrawl — disabled: LinkedIn blocks Firecrawl) ---"
 echo "  ⚡ LinkedIn Firecrawl enrichment skipped — 0% success rate, saves 20 credits/scan"
