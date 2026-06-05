@@ -19,13 +19,13 @@ echo ""
 echo "[1/6] System packages..."
 sudo apt-get update -qq
 sudo apt-get install -y -qq \
-    python3.11 python3.11-venv python3-pip \
+    python3 python3-venv python3-pip \
     git curl wget unzip \
     libglib2.0-0 libnss3 libnspr4 libatk1.0-0 libatk-bridge2.0-0 \
     libcups2 libdrm2 libdbus-1-3 libxcb1 libxkbcommon0 libx11-6 \
     libxcomposite1 libxdamage1 libxext6 libxfixes3 libxrandr2 \
-    libgbm1 libpango-1.0-0 libcairo2 libasound2 \
-    fonts-liberation libappindicator3-1 xdg-utils
+    libgbm1 libpango-1.0-0 libcairo2 libasound2t64 \
+    fonts-liberation xdg-utils
 echo "  ✓ System packages installed"
 
 # --- Clone repo ---
@@ -43,7 +43,7 @@ echo "  ✓ Repo ready at $PROJECT_DIR"
 # --- Python venv ---
 echo ""
 echo "[3/6] Python venv + deps..."
-python3.11 -m venv venv
+python3 -m venv venv
 venv/bin/pip install --upgrade pip -q
 venv/bin/pip install -r requirements.txt -q
 echo "  ✓ Python deps installed"
