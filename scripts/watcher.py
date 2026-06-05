@@ -2,15 +2,19 @@
 """
 Job Hunter — Instant Alert Watcher
 Polls lightweight job sources every 15 minutes (8am–8pm EDT).
-Sends immediate Slack alert for: score >= 8 AND posted < 2hrs AND applicants < 50.
+Sends immediate Telegram alert for: score >= 8 AND posted < 2hrs AND applicants < 50.
 
 Runs independently from daily-scan.sh — does NOT do full scrape.
 Uses free public APIs only (RemoteOK, Himalayas, YC).
 
 Usage:
   python scripts/watcher.py          # single poll cycle (run via cron */15)
-  python scripts/watcher.py --dry-run  # score + print matches, no Slack
-  python scripts/watcher.py --test     # send test Slack alert + exit
+  python scripts/watcher.py --dry-run  # score + print matches, no Telegram
+  python scripts/watcher.py --test     # send test Telegram alert + exit
+
+.env vars needed:
+  TELEGRAM_BOT_TOKEN=123456:ABC-xyz
+  TELEGRAM_CHAT_ID=987654321
 
 Cron entry (every 15min, 8am–8pm):
   */15 8-20 * * * /path/to/venv/bin/python /path/to/scripts/watcher.py >> /path/to/logs/watcher.log 2>&1
@@ -31,7 +35,8 @@ SEEN_FILE   = BASE_DIR / "data" / "watcher-seen.json"
 SCORED_FILE = BASE_DIR / "data" / "jobs-scored.json"
 PARAMS_FILE = BASE_DIR / "config" / "search-params.json"
 
-SLACK_WEBHOOK = os.environ.get("SLACK_WEBHOOK_URL", "")
+TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+TELEGRAM_CHAT_ID   = os.environ.get("TELEGRAM_CHAT_ID", "")
 
 # ── Config ────────────────────────────────────────────────────────────────────
 
@@ -53,28 +58,32 @@ def save_seen(ids: set):
     trimmed = list(ids)[-500:]  # cap at 500 to avoid unbounded growth
     SEEN_FILE.write_text(json.dumps({"ids": trimmed}, indent=2))
 
-# ── Slack ─────────────────────────────────────────────────────────────────────
+# ── Telegram ──────────────────────────────────────────────────────────────────
 
-def send_slack(payload: dict) -> bool:
-    if not SLACK_WEBHOOK:
-        print("  ⚠ SLACK_WEBHOOK_URL not set — alert skipped")
+def send_telegram(text: str) -> bool:
+    if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
+        print("  ⚠ TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not set — alert skipped")
         return False
-    data = json.dumps(payload).encode("utf-8")
-    req = urllib.request.Request(
-        SLACK_WEBHOOK, data=data,
-        headers={"Content-Type": "application/json"}
-    )
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+    data = json.dumps({
+        "chat_id": TELEGRAM_CHAT_ID,
+        "text": text,
+        "parse_mode": "HTML",
+        "disable_web_page_preview": True
+    }).encode("utf-8")
+    req = urllib.request.Request(url, data=data,
+                                  headers={"Content-Type": "application/json"})
     try:
         with urllib.request.urlopen(req, timeout=10) as resp:
             ok = resp.status == 200
-            print("  ✓ Slack alert sent" if ok else "  ✗ Slack returned non-200")
+            print("  ✓ Telegram alert sent" if ok else "  ✗ Telegram returned non-200")
             return ok
     except Exception as e:
-        print(f"  ✗ Slack error: {e}")
+        print(f"  ✗ Telegram error: {e}")
         return False
 
 
-def build_instant_alert(job: dict) -> dict:
+def build_instant_alert(job: dict) -> str:
     urgency_emoji = {
         "apply-now-critical": "🔴🔴",
         "apply-now-hot":      "🔴",
@@ -92,34 +101,17 @@ def build_instant_alert(job: dict) -> dict:
 
     visa_icon = {"confirmed": "✅", "likely": "🟡", "unclear": "❓"}.get(visa, "❓")
 
-    return {
-        "text": f"{urgency_emoji} INSTANT ALERT — Score: {score}/10 | {title} @ {company}",
-        "blocks": [
-            {
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": (
-                        f"{urgency_emoji} *INSTANT ALERT — Score: {score}/10*\n"
-                        f"*Role:* {title}\n"
-                        f"*Company:* {company}\n"
-                        f"*Posted:* {posted}\n"
-                        f"*Salary:* {salary}\n"
-                        f"*Visa:* {visa_icon} {visa.title()}\n"
-                        f"*Source:* {source}\n"
-                        f"*Apply:* <{url}|Open JD>"
-                    )
-                }
-            },
-            {
-                "type": "context",
-                "elements": [{
-                    "type": "mrkdwn",
-                    "text": f"⚡ Watcher fired at {datetime.now().strftime('%H:%M')} EDT — doesn't wait for scheduled scan"
-                }]
-            }
-        ]
-    }
+    return (
+        f"{urgency_emoji} <b>INSTANT ALERT — Score: {score}/10</b>\n"
+        f"<b>Role:</b> {title}\n"
+        f"<b>Company:</b> {company}\n"
+        f"<b>Posted:</b> {posted}\n"
+        f"<b>Salary:</b> {salary}\n"
+        f"<b>Visa:</b> {visa_icon} {visa.title()}\n"
+        f"<b>Source:</b> {source}\n"
+        f"🔗 <a href=\"{url}\">Apply →</a>\n"
+        f"<i>⚡ Watcher fired at {datetime.now().strftime('%H:%M')} UTC</i>"
+    )
 
 # ── Heuristic scorer (no API cost) ───────────────────────────────────────────
 
@@ -376,7 +368,7 @@ def poll(params: dict, dry_run: bool = False) -> int:
             job["visa"]        = "unclear"  # watcher doesn't do visa lookup — daily scan handles it
 
             if not dry_run:
-                send_slack(build_instant_alert(job))
+                send_telegram(build_instant_alert(job))
                 append_to_scored(job)
                 sync_job_to_sheets(job)
 
@@ -388,22 +380,13 @@ def poll(params: dict, dry_run: bool = False) -> int:
 
 
 def test_alert():
-    payload = {
-        "text": "⚡ Job Hunter Watcher — Test Alert",
-        "blocks": [{
-            "type": "section",
-            "text": {
-                "type": "mrkdwn",
-                "text": (
-                    "⚡ *Job Hunter Watcher — Test Alert*\n"
-                    "Watcher is configured correctly.\n"
-                    "Instant Slack alerts will fire here for: score ≥ 8 + posted < 2hrs + < 50 applicants."
-                )
-            }
-        }]
-    }
-    ok = send_slack(payload)
-    print("✅ Test alert sent" if ok else "✗ Test failed — check SLACK_WEBHOOK_URL")
+    text = (
+        "⚡ <b>Job Hunter Watcher — Test Alert</b>\n"
+        "Watcher is configured correctly.\n"
+        "Instant Telegram alerts will fire here for: score ≥ 8 + posted &lt; 2hrs + &lt; 50 applicants."
+    )
+    ok = send_telegram(text)
+    print("✅ Test alert sent" if ok else "✗ Test failed — check TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID")
 
 
 def main():
@@ -416,12 +399,13 @@ def main():
                 k, _, v = line.partition("=")
                 os.environ.setdefault(k.strip(), v.strip())
 
-    global SLACK_WEBHOOK
-    SLACK_WEBHOOK = os.environ.get("SLACK_WEBHOOK_URL", "")
+    global TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
+    TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+    TELEGRAM_CHAT_ID   = os.environ.get("TELEGRAM_CHAT_ID", "")
 
     parser = argparse.ArgumentParser(description="Job Hunter instant alert watcher")
-    parser.add_argument("--dry-run", action="store_true", help="Score + print, no Slack")
-    parser.add_argument("--test",    action="store_true", help="Send test Slack alert")
+    parser.add_argument("--dry-run", action="store_true", help="Score + print, no Telegram")
+    parser.add_argument("--test",    action="store_true", help="Send test Telegram alert")
     args = parser.parse_args()
 
     if args.test:
