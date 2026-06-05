@@ -130,5 +130,9 @@ echo "--- PHASE 5: SYNC TRACKER ---"
 "$PYTHON" scripts/export-tracker.py && echo "  ✓ tracker.xlsx local backup updated" || echo "  ✗ Local xlsx export FAILED"
 
 echo ""
+echo "--- PHASE 6: SCAN SUMMARY (Telegram) ---"
+"$PYTHON" scripts/scan_summary.py && echo "  ✓ Summary sent" || echo "  ✗ Summary FAILED"
+
+echo ""
 echo "Scan complete — $(date +"%H:%M:%S")"
 echo "========================================"
