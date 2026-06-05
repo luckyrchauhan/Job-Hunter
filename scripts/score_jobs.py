@@ -22,6 +22,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).parent.parent
 RAW_DIR = BASE_DIR / "data" / "jobs-raw"
 H1B_CACHE_FILE = BASE_DIR / "data" / "h1b-cache.json"
+USCIS_DB_FILE  = BASE_DIR / "data" / "uscis-h1b-db.json"
 SCORED_FILE = BASE_DIR / "data" / "jobs-scored.json"
 COMPANIES_FILE = BASE_DIR / "config" / "target-companies.json"
 
@@ -81,24 +82,88 @@ def save_h1b_cache(cache: dict):
 
 _H1B_CACHE = load_h1b_cache()
 
-def lookup_h1b_history(company: str) -> dict:
+# ─── USCIS DB (official government data, built by build_uscis_db.py) ──────────
+
+_USCIS_DB: dict = {}
+
+def _load_uscis_db():
+    global _USCIS_DB
+    if USCIS_DB_FILE.exists():
+        with open(USCIS_DB_FILE) as f:
+            _USCIS_DB = json.load(f)
+
+_load_uscis_db()
+
+_USCIS_LEGAL_SUFFIXES = re.compile(
+    r"\b(llc|inc|corp|corporation|ltd|limited|lp|llp|co|company|"
+    r"incorporated|solutions|technologies|services|group|holdings|"
+    r"enterprises|associates|partners|international|global|us|usa|"
+    r"platforms|labs|systems|software|cloud|digital|ai)\b\.?$",
+    re.I,
+)
+
+def _normalize_for_uscis(name: str) -> str:
+    n = name.lower().strip()
+    # remove .com / .io / .ai TLDs
+    n = re.sub(r"\.(com|io|ai|co|net|org)\b", "", n)
+    n = re.sub(r"[,\.]", " ", n)
+    n = re.sub(r"\s+", " ", n).strip()
+    for _ in range(5):
+        prev = n
+        n = _USCIS_LEGAL_SUFFIXES.sub("", n).strip()
+        if n == prev:
+            break
+    return n.strip()
+
+def lookup_uscis(company: str) -> dict:
     """
-    Query h1bdata.info for company's H1B petition history.
-    Returns: {count, years_active, recent_year, score_boost, note}
-    Cached in data/h1b-cache.json to avoid repeat hits.
-    score_boost: 0.0 (never) / 0.3 (rare) / 0.6 (consistent) / 1.0 (heavy)
+    Look up company in USCIS H-1B employer DB (data/uscis-h1b-db.json).
+    Returns {total_approvals, total_denials, years, approval_rate, note} or empty.
     """
-    norm = normalize_company(company)
+    if not _USCIS_DB:
+        return {}
+
+    norm = _normalize_for_uscis(company)
     if not norm:
-        return {"count": 0, "score_boost": 0.0, "note": "no company name"}
+        return {}
 
-    # Return cached result (valid 30 days)
-    cached = _H1B_CACHE.get(norm)
-    if cached:
-        age_days = (time.time() - cached.get("cached_at", 0)) / 86400
-        if age_days < 30:
-            return cached
+    # Collect all candidates: direct match + prefix matches (e.g. "amazon" → "amazon com services")
+    candidates = [
+        (k, v) for k, v in _USCIS_DB.items()
+        if k == norm or k.startswith(norm + " ") or norm.startswith(k + " ")
+    ]
+    if not candidates:
+        return {}
 
+    # Pick the entity with most approvals (avoids tiny subsidiaries)
+    _, entry = max(candidates, key=lambda x: x[1]["total_approvals"])
+
+    if not entry or entry["total_approvals"] == 0:
+        return {}
+
+    total_a = entry["total_approvals"]
+    total_d = entry["total_denials"]
+    total   = total_a + total_d
+    rate    = round(total_a / total * 100) if total > 0 else 0
+
+    # Most recent year with data
+    years = entry.get("years", {})
+    recent_year = max(years, key=lambda y: int(y)) if years else "?"
+    recent_count = years.get(recent_year, 0)
+
+    return {
+        "total_approvals": total_a,
+        "total_denials": total_d,
+        "approval_rate": rate,
+        "recent_year": recent_year,
+        "recent_year_count": recent_count,
+        "years": years,
+        "note": f"USCIS: {recent_count} approvals in {recent_year}, {rate}% approval rate (2021-2023)",
+    }
+
+
+def _lookup_h1bdata(company: str, norm: str) -> dict:
+    """Scrape h1bdata.info. Returns petition count + years."""
     try:
         query = urllib.parse.urlencode({"em": company, "job": "", "city": "", "year": "all"})
         url = f"https://h1bdata.info/index.php?{query}"
@@ -106,7 +171,6 @@ def lookup_h1b_history(company: str) -> dict:
         with urllib.request.urlopen(req, timeout=8) as resp:
             html = resp.read().decode("utf-8", errors="ignore")
 
-        # Parse table rows
         rows = re.findall(r'<tr[^>]*>.*?</tr>', html, re.DOTALL)
         years_seen = set()
         petition_count = 0
@@ -114,47 +178,98 @@ def lookup_h1b_history(company: str) -> dict:
             cells = re.findall(r'<td[^>]*>(.*?)</td>', row, re.DOTALL)
             if len(cells) >= 5:
                 clean = [re.sub('<[^>]+>', '', c).strip() for c in cells]
-                if clean[0]:  # has employer name
+                if clean[0]:
                     petition_count += 1
-                    # date is usually last cell: MM/DD/YYYY
                     date_match = re.search(r'(\d{4})$', clean[-1])
                     if date_match:
                         years_seen.add(date_match.group(1))
 
-        # Score boost tiers
-        if petition_count >= 50:
-            boost = 1.0
-            note = f"Heavy H1B sponsor: {petition_count} petitions, {len(years_seen)} years"
-        elif petition_count >= 10:
-            boost = 0.7
-            note = f"Consistent H1B sponsor: {petition_count} petitions"
-        elif petition_count >= 3:
-            boost = 0.4
-            note = f"Occasional H1B sponsor: {petition_count} petitions"
-        elif petition_count >= 1:
-            boost = 0.2
-            note = f"Rare H1B sponsor: {petition_count} petition(s)"
-        else:
-            boost = 0.0
-            note = "No H1B history found — manual verify"
+        return {"count": petition_count, "years_active": sorted(years_seen)}
+    except Exception:
+        return {"count": 0, "years_active": []}
 
-        result = {
-            "count": petition_count,
-            "years_active": sorted(years_seen),
-            "score_boost": boost,
-            "note": note,
-            "cached_at": time.time(),
-            "source": "h1bdata.info",
-        }
-        _H1B_CACHE[norm] = result
-        save_h1b_cache(_H1B_CACHE)
-        return result
 
-    except Exception as e:
-        result = {"count": 0, "score_boost": 0.0, "note": f"H1B lookup failed: {e}", "cached_at": time.time()}
-        _H1B_CACHE[norm] = result
-        save_h1b_cache(_H1B_CACHE)
-        return result
+def lookup_h1b_history(company: str) -> dict:
+    """
+    Multi-source H1B lookup:  h1bdata.info + USCIS official DB.
+    Returns combined result with confidence score + evidence string.
+    Cached 30 days in data/h1b-cache.json.
+    """
+    norm = normalize_company(company)
+    if not norm:
+        return {"count": 0, "score_boost": 0.0, "note": "no company name"}
+
+    cached = _H1B_CACHE.get(norm)
+    if cached:
+        age_days = (time.time() - cached.get("cached_at", 0)) / 86400
+        if age_days < 30:
+            return cached
+
+    # ── Source 1: USCIS official DB (local, instant) ──
+    uscis = lookup_uscis(company)
+
+    # ── Source 2: h1bdata.info (live scrape, fallback) ──
+    h1bdata = _lookup_h1bdata(company, norm)
+
+    # ── Combine ──
+    sources_confirmed = 0
+    evidence_parts = []
+
+    if uscis and uscis["total_approvals"] > 0:
+        sources_confirmed += 1
+        evidence_parts.append(
+            f"{uscis['recent_year_count']} approvals ({uscis['recent_year']}, "
+            f"{uscis['approval_rate']}% rate) [USCIS]"
+        )
+
+    if h1bdata["count"] > 0:
+        sources_confirmed += 1
+        recent_yr = h1bdata["years_active"][-1] if h1bdata["years_active"] else "?"
+        evidence_parts.append(
+            f"{h1bdata['count']} petitions [{recent_yr}] [h1bdata.info]"
+        )
+
+    # Use USCIS count when available (more authoritative), else h1bdata count
+    primary_count = uscis.get("total_approvals", 0) if uscis else h1bdata["count"]
+
+    # Score boost: multi-source confirmation is higher confidence
+    if primary_count >= 200:
+        boost = 1.0
+    elif primary_count >= 50:
+        boost = 0.85
+    elif primary_count >= 20:
+        boost = 0.7
+    elif primary_count >= 5:
+        boost = 0.5
+    elif primary_count >= 1:
+        boost = 0.3
+    else:
+        boost = 0.0
+
+    # Bonus for multi-source confirmation
+    if sources_confirmed >= 2:
+        boost = min(1.0, boost + 0.1)
+
+    if evidence_parts:
+        note = " | ".join(evidence_parts)
+        if sources_confirmed >= 2:
+            note += " ✓✓ (2 sources)"
+    else:
+        note = "No H1B history found — manual verify"
+
+    result = {
+        "count": primary_count,
+        "years_active": h1bdata.get("years_active", []),
+        "score_boost": boost,
+        "note": note,
+        "sources_confirmed": sources_confirmed,
+        "uscis": uscis if uscis else None,
+        "h1bdata_count": h1bdata["count"],
+        "cached_at": time.time(),
+    }
+    _H1B_CACHE[norm] = result
+    save_h1b_cache(_H1B_CACHE)
+    return result
 
 
 def check_visa(company: str, description: str) -> dict:

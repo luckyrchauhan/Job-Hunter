@@ -108,12 +108,21 @@ def format_job_alert(job: dict) -> str:
         tags.append("🌎 Remote")
     tag_str = "  ".join(tags) if tags else "—"
 
+    # H1B evidence from multi-source lookup
+    h1b_history = job.get("h1b_history") or {}
+    h1b_note = h1b_history.get("note", "")
+    sources = h1b_history.get("sources_confirmed", 0)
+    if h1b_note and h1b_note != "No H1B history found — manual verify":
+        visa_detail = f"\n   <i>{h1b_note}</i>"
+    else:
+        visa_detail = ""
+
     return (
         f"{tier_icon} <b>{urgency_label}</b>\n"
         f"<b>{title}</b>\n"
         f"🏢 {company}\n"
         f"⭐ Score: {score}/10 ({band})\n"
-        f"🛂 Visa: {visa_icon} {visa_status.replace('_', ' ')}\n"
+        f"🛂 Visa: {visa_icon} {visa_status.replace('_', ' ')}{visa_detail}\n"
         f"📅 Posted: {days} days ago\n"
         f"🏷 {tag_str}\n"
         f"🔗 <a href=\"{url}\">Apply →</a>"

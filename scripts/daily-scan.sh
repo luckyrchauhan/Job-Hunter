@@ -89,6 +89,8 @@ run_scraper "AI Jobs + Otta" "scripts/scrapers/scrape_aijobs.py"
 # Company direct — weekly only (Mondays)
 if [ "$(date +%u)" = "1" ]; then
     run_scraper "Company Career Pages" "scripts/scrapers/scrape_company_direct.py"
+    echo "  Refreshing USCIS H1B database (weekly)..."
+    "$PYTHON" scripts/build_uscis_db.py && echo "  ✓ USCIS DB refreshed" || echo "  ✗ USCIS DB refresh FAILED (continuing)"
 else
     echo "  ⚡ Company Direct — runs Mondays only (skipping)"
 fi
