@@ -5636,5 +5636,197 @@
     "note": "No H1B history found \u2014 manual verify",
     "cached_at": 1780149232.352812,
     "source": "h1bdata.info"
+  },
+  "google": {
+    "count": 17362,
+    "years_active": [
+      "2025",
+      "2026"
+    ],
+    "score_boost": 1.0,
+    "note": "2460 approvals (2023, 99% rate) [USCIS] | 8139 petitions [2026] [h1bdata.info] \u2713\u2713 (2 sources)",
+    "sources_confirmed": 2,
+    "uscis": {
+      "total_approvals": 17362,
+      "total_denials": 190,
+      "approval_rate": 99,
+      "recent_year": "2023",
+      "recent_year_count": 2460,
+      "years": {
+        "2023": 2460,
+        "2022": 8438,
+        "2021": 6464
+      },
+      "note": "USCIS: 2460 approvals in 2023, 99% approval rate (2021-2023)"
+    },
+    "h1bdata_count": 8139,
+    "cached_at": 1780680267.071275
+  },
+  "amazon": {
+    "count": 36085,
+    "years_active": [
+      "2025",
+      "2026"
+    ],
+    "score_boost": 1.0,
+    "note": "4578 approvals (2023, 98% rate) [USCIS] | 21206 petitions [2026] [h1bdata.info] \u2713\u2713 (2 sources)",
+    "sources_confirmed": 2,
+    "uscis": {
+      "total_approvals": 36085,
+      "total_denials": 595,
+      "approval_rate": 98,
+      "recent_year": "2023",
+      "recent_year_count": 4578,
+      "years": {
+        "2023": 4578,
+        "2022": 18561,
+        "2021": 12946
+      },
+      "note": "USCIS: 4578 approvals in 2023, 98% approval rate (2021-2023)"
+    },
+    "h1bdata_count": 21206,
+    "cached_at": 1780680270.065943
+  },
+  "meta": {
+    "count": 7891,
+    "years_active": [
+      "2025",
+      "2026"
+    ],
+    "score_boost": 1.0,
+    "note": "1537 approvals (2023, 99% rate) [USCIS] | 5888 petitions [2026] [h1bdata.info] \u2713\u2713 (2 sources)",
+    "sources_confirmed": 2,
+    "uscis": {
+      "total_approvals": 7891,
+      "total_denials": 59,
+      "approval_rate": 99,
+      "recent_year": "2023",
+      "recent_year_count": 1537,
+      "years": {
+        "2023": 1537,
+        "2022": 6354
+      },
+      "note": "USCIS: 1537 approvals in 2023, 99% approval rate (2021-2023)"
+    },
+    "h1bdata_count": 5888,
+    "cached_at": 1780680273.8118558
+  },
+  "salesforce": {
+    "count": 5023,
+    "years_active": [
+      "2025",
+      "2026"
+    ],
+    "score_boost": 1.0,
+    "note": "2250 approvals (2022, 99% rate) [USCIS] | 1868 petitions [2026] [h1bdata.info] \u2713\u2713 (2 sources)",
+    "sources_confirmed": 2,
+    "uscis": {
+      "total_approvals": 5023,
+      "total_denials": 49,
+      "approval_rate": 99,
+      "recent_year": "2022",
+      "recent_year_count": 2250,
+      "years": {
+        "2022": 2250,
+        "2021": 2773
+      },
+      "note": "USCIS: 2250 approvals in 2022, 99% approval rate (2021-2023)"
+    },
+    "h1bdata_count": 1868,
+    "cached_at": 1780680275.8419352
+  },
+  "uber": {
+    "count": 2123,
+    "years_active": [
+      "2025",
+      "2026"
+    ],
+    "score_boost": 1.0,
+    "note": "207 approvals (2023, 98% rate) [USCIS] | 819 petitions [2026] [h1bdata.info] \u2713\u2713 (2 sources)",
+    "sources_confirmed": 2,
+    "uscis": {
+      "total_approvals": 2123,
+      "total_denials": 40,
+      "approval_rate": 98,
+      "recent_year": "2023",
+      "recent_year_count": 207,
+      "years": {
+        "2023": 207,
+        "2022": 1072,
+        "2021": 844
+      },
+      "note": "USCIS: 207 approvals in 2023, 98% approval rate (2021-2023)"
+    },
+    "h1bdata_count": 819,
+    "cached_at": 1780680277.4028878
+  },
+  "openai": {
+    "count": 27,
+    "years_active": [
+      "2025",
+      "2026"
+    ],
+    "score_boost": 0.7999999999999999,
+    "note": "15 approvals (2022, 100% rate) [USCIS] | 159 petitions [2026] [h1bdata.info] \u2713\u2713 (2 sources)",
+    "sources_confirmed": 2,
+    "uscis": {
+      "total_approvals": 27,
+      "total_denials": 0,
+      "approval_rate": 100,
+      "recent_year": "2022",
+      "recent_year_count": 15,
+      "years": {
+        "2022": 15,
+        "2021": 12
+      },
+      "note": "USCIS: 15 approvals in 2022, 100% approval rate (2021-2023)"
+    },
+    "h1bdata_count": 159,
+    "cached_at": 1780680278.4004312
+  },
+  "apple": {
+    "count": 11598,
+    "years_active": [
+      "2025",
+      "2026"
+    ],
+    "score_boost": 1.0,
+    "note": "1825 approvals (2023, 99% rate) [USCIS] | 7151 petitions [2026] [h1bdata.info] \u2713\u2713 (2 sources)",
+    "sources_confirmed": 2,
+    "uscis": {
+      "total_approvals": 11598,
+      "total_denials": 116,
+      "approval_rate": 99,
+      "recent_year": "2023",
+      "recent_year_count": 1825,
+      "years": {
+        "2023": 1825,
+        "2022": 5046,
+        "2021": 4727
+      },
+      "note": "USCIS: 1825 approvals in 2023, 99% approval rate (2021-2023)"
+    },
+    "h1bdata_count": 7151,
+    "cached_at": 1780680283.060159
+  },
+  "randomstartupxyz": {
+    "count": 0,
+    "years_active": [],
+    "score_boost": 0.0,
+    "note": "No H1B history found \u2014 manual verify",
+    "sources_confirmed": 0,
+    "uscis": null,
+    "h1bdata_count": 0,
+    "cached_at": 1780680290.770087
+  },
+  "tinycompanyabc": {
+    "count": 0,
+    "years_active": [],
+    "score_boost": 0.0,
+    "note": "No H1B history found \u2014 manual verify",
+    "sources_confirmed": 0,
+    "uscis": null,
+    "h1bdata_count": 0,
+    "cached_at": 1780680291.595541
   }
 }
